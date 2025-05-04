@@ -11,19 +11,9 @@ class Frame:
         self.frameNum = frameNum
         
     
-    #saves frame object to pickle file at the given directory
-    #file is named 'frame{frameNum}.pkl
-    def dumpToPickle(self, dirPath):
+    #returns self encoded as pickle object, in bytes, ready to send
+    def dumpToPickle(self):
         
-        if '/' in dirPath:
-            char = '/'
-        else:
-            char = '\\'
-        
-        filePath = dirPath + char + f'frame{self.frameNum}.pkl'
-        pkl = open(filePath, 'wb')
-        pickle.dump(self, pkl)
-        
-        pkl.close()
+        return pickle.dumps(self)
         
 f = Frame()
