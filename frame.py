@@ -12,6 +12,7 @@ class Frame:
         
     
     #saves frame object to pickle file at the given directory
+    #file is named 'frame{frameNum}.pkl
     def dumpToPickle(self, dirPath):
         
         if '/' in dirPath:
