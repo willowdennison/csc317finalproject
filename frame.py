@@ -1,10 +1,12 @@
 import pickle
+from pydub import AudioSegment
+from numpy import ndarray
 
 class Frame:
     
     #takes an image from cv2.imread, a pydub.AudioSegment, and a frame number
     #stores them in a Frame object to be dumped to a pickle file
-    def __init__(self, img, audio, frameNum):
+    def __init__(self, img:ndarray, audio:AudioSegment, frameNum:int):
         
         self.img = img
         self.audio = audio
@@ -15,5 +17,3 @@ class Frame:
     def dumpToPickle(self):
         
         return pickle.dumps(self)
-        
-f = Frame()
