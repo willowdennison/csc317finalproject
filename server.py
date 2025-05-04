@@ -2,9 +2,9 @@ from socket import *
 import threading
 import os
 import subprocess
-from user import UserClass
+from user import User
 
-class FileServer(UserClass):
+class FileServer:
 
     def __init__(self):
 
@@ -156,6 +156,6 @@ class FileServer(UserClass):
         file.close()
     
     def createUserThread(self, conn):
-        thread = threading.Thread(target = self.userThread, args = (conn))
+        thread = threading.Thread(target = lambda: User(), args = (conn,))
         thread.start()
     
