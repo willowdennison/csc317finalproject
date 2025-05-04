@@ -107,3 +107,4 @@ class VideoStream:
     #sets self.position to frameNum and starts playing from there
     def goTo(self, frameNum:int):
         self.currentRequest = (frameNum, None)
+        self.position = frameNum
