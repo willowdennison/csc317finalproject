@@ -18,6 +18,7 @@ class User:
         self.recvThread.start()
     
     
+    #i dont know if this will work for sending video frames unless we straight up add them to the queue
     def sendLoop(self):
         while True:
             if self.sendQueue[0]:
@@ -28,5 +29,9 @@ class User:
         while True:
             req = self._conn.recv(1024).decode()
             response = self._server.handleRequest(req)
+            
+            #if response is a video request with frames
+                #self.activeRequest = (startFrame, endFrame)
+            
             if response: 
                 self.sendQueue.put(response)
