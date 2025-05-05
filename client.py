@@ -4,12 +4,15 @@ import threading
 import queue
 import time 
 import os 
+from videoStream import VideoStream
+
 
 
 class Client:
     def __init__(self):
 
         self._port = 821
+        self.segmentLength = 1024 
 
         ip = input("Enter host IP")
 
@@ -68,7 +71,8 @@ class Client:
             
             self.recvThread = threading.Thread( target = self.receive)
             self.recvThread.start()
-
+   
+    # plays and pauses the video stream
     def playPause(self):
 
         self.playbackEnabled = not self.playbackEnabled
@@ -77,7 +81,7 @@ class Client:
             
             self.videoStream.play()
 
-    
+     #sends a request to the server to pause the video stream
     def quit(self):
         
         self.mainSocket.send('quit\n'.encode())
@@ -86,10 +90,9 @@ class Client:
         
         print('socket closed')
 
-    
-    def goTo(self, timeStamp, frameRate):
-        frameNum = int(timeStamp * frameRate)
-
+    #goes to a specific time in the video stream
+    def goToVideo(self, timeStamp, frameRate):
+        frameNum = int(timeStamp * frameRate) # time stamp is in seconds
         if self.videoStream.frames[frameNum] is not None:
          self.videoStream.goTo(frameNum)
 
@@ -102,7 +105,7 @@ class Client:
             self.videoStream.goTo(frameNum)
             self.playbackEnabled = True
 
-
+    #Sends file path and file contents, gets filename from file path and adds header flag
     def uploadFile(self, filePath):
         
         if os.path.exists(filePath): 
@@ -153,7 +156,7 @@ class Client:
                 break 
     
 
-
+    # takes a file object, transforms the file into a list of maximum length 1024 byte data segments, encoded to be sent over a socket
     def encodeFile(self, file):
         
         file.seek(0, os.SEEK_END)
@@ -173,7 +176,7 @@ class Client:
             
         return segments
     
-
+    #decodes a segmentList from downloadFile() and saves it to fileName
     def decodeFile(self, segmentList, fileName):
         
         print(segmentList)
