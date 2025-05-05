@@ -16,12 +16,14 @@ class User:
         
         self.recvThread = Thread(target = self.recvLoop)
         self.recvThread.start()
+        
+        self.stopQueue = True
     
     
     #i dont know if this will work for sending video frames unless we straight up add them to the queue
     def sendLoop(self):
         while True:
-            if len(self.sendQueue[0]) > 0:
+            if not self.sendQueue.empty():
                 self._conn.send(self.sendQueue.pop().encode())
     
     
@@ -35,3 +37,9 @@ class User:
             
             if response: 
                 self.sendQueue.put(response)
+
+    def sendFrameLoop(self, conn, startFrame, endFrame):
+        currentFrame = startFrame
+        while not self.stopQueue and currentFrame <= endFrame:
+            
+            pass

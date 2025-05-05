@@ -69,7 +69,7 @@ class GUI:
 
 
     def uploadVideo(self):
-        pass
+        self.client.uploadVideo(self.uploadPath)
 
 
     def quit(self):

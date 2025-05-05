@@ -54,11 +54,9 @@ class FileServer:
         
     #DOES NOT CHECK FOR FILE PATH MISSING for efficiency, will only be run if we know exactly where each frame is located b/c it will stop 
     #sending files if something goes wrong and crash the client and the thread
-    def sendFrame(self, frameName, conn):
-        
-        file = self.openFile(frameName, 'rb')
+    def sendFrame(self, frame, conn):
 
-        segmentList = self.encodeFile(file)
+        segmentList = self.encodeFile(frame)
 
         for item in segmentList:
             conn.send(item)
@@ -171,21 +169,29 @@ class FileServer:
 
         func = req.split('\n')[0]
         
-        if func == 'ply': #calls after the client wants to send the file starting at the var 'frame' frame
-            frame = int(req.split('\n')[1])
-            filePath = req.split('\n')[2]
-            #start sending thread with conn at (frame) frame with file (filePath)
+        if func == 'select': #calls after the client wants to send the file starting at the var 'frame' frame
+            filePath = req.split('\n')[1]
+            startFrame = int(req.split('\n')[2])
+            try:
+                endFrame = int(req.split('\n')[3])
+            except IndexError:
+                endFrame = None
+            #start sending thread with conn starting at (startFrame), ending with (endFrame) frame with file (filePath) 
             return 'Started playing function at the {frame} frame'
         
         if func == 'stp': #calls after the client wants server to stop sending the file
             #stop the sending thread
             return 'Stopped sending'
         
-        if func == 'dwn':
+        if func == 'fn':
             fileName = req.split('\n')[1]
             self.receiveVideo(conn, fileName)
             return 'File Downloaded'
         
-        if func == 'lst':
+        if func == 'list':
             conn.send(self.listDir)
             return 'Directory Sent'
+        
+        if func == 'quit':
+            conn.close()
+            return 'Connection Closed'
