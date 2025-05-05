@@ -10,7 +10,7 @@ from videoStream import VideoStream
 
 class Client:
     def __init__(self):
-
+        self.gui = GUI.GUI(self)# needs to be moved below the connection logic, but after everything is debugged
         self._port = 821
         self.segmentLength = 1024 
 
@@ -26,7 +26,7 @@ class Client:
 
         self.recvThread = None
         
-        self.recvThreadRunning= False
+        self.recvThreadRunning = False
         
         self.frameQueue = queue.Queue(maxsize=100)  
        
@@ -65,9 +65,17 @@ class Client:
                   msg += f"\n{endFrame}"
             self.mainSocket.send(msg.encode())
 
+            info = self.mainSocket.recv(1024).decode()
+            
             self.activeRequest = videoName
             self.frameQueue = queue.Queue(maxsize=100)
             self.recvThreadRunning = True
+            
+            #change to however this actually gets value from info
+            self.videoStream = VideoStream(info['numFrames'], info['frameRate'], self.gui)
+            
+            if startFrame > 0 or endFrame:
+                self.videoStream.currentRequest = (startFrame, endFrame)
             
             self.recvThread = threading.Thread( target = self.receive)
             self.recvThread.start()
@@ -90,10 +98,21 @@ class Client:
         
         print('socket closed')
 
+    def getCurrentTimeStamp(self):
+        timeStamp = time.time()
+        print('Current time stamp:', timeStamp)
+        return timeStamp
+
+        
+        
+        
     #goes to a specific time in the video stream
-    def goToVideo(self, timeStamp, frameRate):
+    def goToVideo(self, timeStamp , frameRate):
+       
         frameNum = int(timeStamp * frameRate) # time stamp is in seconds
+        
         if self.videoStream.frames[frameNum] is not None:
+         
          self.videoStream.goTo(frameNum)
 
         else:
@@ -103,6 +122,7 @@ class Client:
                 time.sleep(0.01)
 
             self.videoStream.goTo(frameNum)
+           
             self.playbackEnabled = True
 
     #Sends file path and file contents, gets filename from file path and adds header flag
@@ -120,7 +140,7 @@ class Client:
         else: 
             char = '\\'
         
-        fileName = 'fn:' + filePath.split(char)[-1]
+        fileName = 'fn\n' + filePath.split(char)[-1]
         
         self.mainSocket.send(fileName.encode())
         
@@ -202,3 +222,5 @@ class Client:
         
         file.close()
 
+if __name__ == "__main__":
+    client = Client()

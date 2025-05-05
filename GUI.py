@@ -4,7 +4,8 @@ from tkinter import PhotoImage
 
 class GUI:
 
-    def __init__(self):
+    def __init__(self, clnt):
+        self.client=clnt
         root=Tk()
 
         root.geometry("1200x500")
@@ -17,6 +18,7 @@ class GUI:
         self.msgQueueMaxLength=10
         self.msgQueue=[]
         self.videoName = StringVar()
+        self.uploadPath = StringVar()
 
         #creating a frame on the root so grid can assign elements to different col/rows
         self.commandFrame = ttk.Frame(root, padding="3 3 12 12")
@@ -28,6 +30,11 @@ class GUI:
         ttk.Label(self.commandFrame,  text="Select Video").grid(column=1, row=1, sticky=W)
         videoNameEntry = ttk.Entry(self.commandFrame, width=20, textvariable=self.videoName)
         videoNameEntry.grid(column=0,columnspan=2, row=2, sticky=(W, E))
+
+        ttk.Button(self.commandFrame, text="Upload", command=self.uploadVideo).grid(column=0, row=3, sticky=W)
+        ttk.Label(self.commandFrame,  text="Upload Video").grid(column=1, row=3, sticky=W)
+        uploadEntry = ttk.Entry(self.commandFrame, width=20, textvariable=self.uploadPath)
+        uploadEntry.grid(column=0,columnspan=2, row=4, sticky=(W, E))
 
 
         img=PhotoImage()
@@ -42,28 +49,31 @@ class GUI:
 
 
     def listAvailableVideos(self):
-        pass
-
+        self.client.listVideo()
 
 
     def selectVideo(self):
-        pass
+        self.client.selectVideo(self.videoName, 0)
 
 
     def playPauseButton(self):
-        pass
+        self.client.playPause()
 
     
     def goBack(self):
-        pass
+        self.client.goToVideo(self.client.getCurrentTimestamp()-10)
 
 
     def goForward(self):
-        pass
+        self.client.goToVideo(self.client.getCurrentTimestamp()+10)
 
 
     def uploadVideo(self):
         pass
+
+
+    def quit(self):
+        self.client.quit()
 
 
     def setFrame(self, img):
@@ -84,7 +94,3 @@ class GUI:
 
         self.consoleLabel.config(text=txt)
 
-
-if __name__ == "__main__":
-    main=GUI()
-    #MainWindow(ClientTest.fileClient())#debug only, create a mainWindow in client and pass self

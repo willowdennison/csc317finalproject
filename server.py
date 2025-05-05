@@ -159,3 +159,33 @@ class FileServer:
         thread = threading.Thread(target = lambda: User(), args = (conn,))
         thread.start()
     
+    def userThread(self, conn):
+
+        while True:
+            req = conn.recv(1024).decode()
+            
+            response = self.handleRequest(req, conn)
+
+
+    def handleRequest(self, req, conn):
+
+        func = req.split('\n')[0]
+        
+        if func == 'ply': #calls after the client wants to send the file starting at the var 'frame' frame
+            frame = int(req.split('\n')[1])
+            filePath = req.split('\n')[2]
+            #start sending thread with conn at (frame) frame with file (filePath)
+            return 'Started playing function at the {frame} frame'
+        
+        if func == 'stp': #calls after the client wants server to stop sending the file
+            #stop the sending thread
+            return 'Stopped sending'
+        
+        if func == 'dwn':
+            fileName = req.split('\n')[1]
+            self.receiveVideo(conn, fileName)
+            return 'File Downloaded'
+        
+        if func == 'lst':
+            conn.send(self.listDir)
+            return 'Directory Sent'
