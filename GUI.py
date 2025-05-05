@@ -24,18 +24,18 @@ class GUI:
 
         ttk.Button(self.commandFrame, text="List All Videos", command=self.listAvailableVideos).grid(column=0,columnspan=2, row=0, sticky=W)
 
-        ttk.Button(self.commandFrame, text="Select", command=self.selectVideo).grid(column=0, row=3, rowspan=2, sticky=W)
-        ttk.Label(self.commandFrame,  text="Select Video").grid(column=1, row=3, sticky=(W, E))
-        renameOldFileEntry = ttk.Entry(self.commandFrame, width=30, textvariable=self.videoName)
-        renameOldFileEntry.grid(column=2, row=3, sticky=(W, E))
+        ttk.Button(self.commandFrame, text="Select", command=self.selectVideo).grid(column=0, row=1, sticky=W)
+        ttk.Label(self.commandFrame,  text="Select Video").grid(column=1, row=1, sticky=W)
+        videoNameEntry = ttk.Entry(self.commandFrame, width=20, textvariable=self.videoName)
+        videoNameEntry.grid(column=0,columnspan=2, row=2, sticky=(W, E))
 
 
         img=PhotoImage()
-        self.photoGrid=ttk.Label(self.commandFrame,image = img).grid(column=1, row=3, sticky=(W, E))
+        self.photoGrid=ttk.Label(self.commandFrame, text="video here", width=100).grid(column=2,columnspan=4, row=1,rowspan=4)
         
 
         self.consoleLabel=ttk.Label(self.commandFrame, text="console square", font=("Consolas",10), background='Gray')
-        self.consoleLabel.grid(column=3, columnspan=2, row=0, rowspan=6, sticky=(S))
+        self.consoleLabel.grid(column=6, columnspan=4, row=1, rowspan=4, sticky=(S))
 
         #mainloop is an internal while loop provided by tkinter
         root.mainloop()
