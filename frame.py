@@ -1,6 +1,4 @@
 import pickle
-from pydub import AudioSegment
-from numpy import ndarray
 
 class Frame:
     
