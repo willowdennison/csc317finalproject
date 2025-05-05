@@ -2,6 +2,7 @@ from threading import Thread
 import time
 from frame import Frame
 from GUI import GUI
+import pyaudio
 
 
 class VideoStream:
@@ -17,9 +18,9 @@ class VideoStream:
         #current start and end frame being requested, none meaning end frame
         self.currentRequest = (0, None)
         
-        #array for all frames
-        #make smaller looping array to save space?
+        #array for frame images
         self.frames = [None] * numFrames
+        self.audioStream = pyaudio.PyAudio.open(rate=fps)
         
         self.gui = gui
         
