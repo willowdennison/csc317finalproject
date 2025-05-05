@@ -21,7 +21,7 @@ class User:
     #i dont know if this will work for sending video frames unless we straight up add them to the queue
     def sendLoop(self):
         while True:
-            if self.sendQueue[0]:
+            if len(self.sendQueue[0]) > 0:
                 self._conn.send(self.sendQueue.pop().encode())
     
     
