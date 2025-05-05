@@ -20,7 +20,7 @@ class VideoStream:
         
         #array for frame images
         self.frames = [None] * numFrames
-        self.audioStream = pyaudio.PyAudio.open(rate=fps)
+        self.audioStream = pyaudio.PyAudio.open(rate=fps, input=True, output=True)
         
         self.gui = gui
         
@@ -86,13 +86,17 @@ class VideoStream:
     
     #takes a frame and adds it to the frame list at the index of its frameNum
     def insertFrame(self, frame:Frame):
-        self.frames[frame.frameNum] = frame
+        self.audioStream.write(frame.audio)
+        self.frames[frame.frameNum] = frame.img
     
     
     #renders frame image and audio to self.gui
-    def render(self, frame:Frame):
-        self.gui.showImage(frame.img)
-        self.gui.playAudio(frame.audio)
+    def render(self, img:bytes):
+        
+        if not self.audioStream.is_active:
+            self.audioStream.start_stream()
+        
+        self.gui.showImage(img)
         
     
     #set self.play to true and tell videostream to play on gui
