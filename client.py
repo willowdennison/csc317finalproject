@@ -1,8 +1,9 @@
 from socket import*
-#import GUI
+import GUI
 import threading
 import queue
 import time 
+import os 
 
 
 class Client:
@@ -18,7 +19,7 @@ class Client:
         self.mainSocket.connect((ip, self._port))
         print("socket connected")
 
-       # self.interface = GUI.MainWindow(self)
+        self.interface = GUI.MainWindow(self)
 
         self.recvThread = None
         
@@ -62,7 +63,7 @@ class Client:
             self.mainSocket.send(msg.encode())
 
             self.activeRequest = videoName
-            self.frameQueue = queue.Queue(max=100)
+            self.frameQueue = queue.Queue(maxsize=100)
             self.recvThreadRunning = True
             
             self.recvThread = threading.Thread( target = self.receive)
@@ -89,8 +90,8 @@ class Client:
     def goTo(self, timeStamp, frameRate):
         frameNum = int(timeStamp * frameRate)
 
-        if frameNum in self.videoStream.bufferdFrames():
-            self.videoStream.jumpToFrame(frameNum)
+        if self.videoStream.frames[frameNum] is not None:
+         self.videoStream.goTo(frameNum)
 
         else:
             self.selectVideo(self.currentVideo, frameNum)
@@ -98,5 +99,103 @@ class Client:
             while self.frameQueue.qsize() == 0:
                 time.sleep(0.01)
 
-            self.videoStream.jumpToFrame(frameNum)
+            self.videoStream.goTo(frameNum)
             self.playbackEnabled = True
+
+
+    def uploadFile(self, filePath):
+        
+        if os.path.exists(filePath): 
+            file = open(filePath, 'rb')
+            
+        else:
+            raise FileNotFoundError
+        
+        
+        if '/' in filePath:
+            char = '/'
+        else: 
+            char = '\\'
+        
+        fileName = 'fn:' + filePath.split(char)[-1]
+        
+        self.mainSocket.send(fileName.encode())
+        
+        segmentList = self.encodeFile(file)
+        
+        time.sleep(0.01)
+
+        for item in segmentList:
+            self.mainSocket.send(item) 
+            print(item)
+    
+        return filePath + ' uploaded'
+    
+
+    def recieve(self):
+        while self.recvThreadRunning:
+
+            frameObj = self.mainSocket.recv(1024)
+            if not frameObj:
+                break
+            if not self.frameQueue.full():
+                self.frameQueue.put(frameObj)
+            else:
+                self.mainSocket.send('Pause Video\n'.encode())
+
+            if self.videoStream:
+                self.videoStream.insertFrame(frameObj)
+
+            while  self.videoStream.currentFrame  > 20 and not self.frameQueue.empty():
+                self.frameQueue.get()
+
+            if self.activeRequest != self.currentVideo:
+                break 
+    
+
+
+    def encodeFile(self, file):
+        
+        file.seek(0, os.SEEK_END)
+        fileLength = file.tell()
+        
+        file.seek(0)
+        
+        nSegments = int(fileLength / self.segmentLength) + (fileLength % self.segmentLength > 0)
+        
+        segments = []
+        currentSegment = 0
+        
+        while currentSegment <= nSegments:
+            
+            segments.append(file.read(self.segmentLength))
+            currentSegment += 1
+            
+        return segments
+    
+
+    def decodeFile(self, segmentList, fileName):
+        
+        print(segmentList)
+    
+        filePath = os.getcwd()
+        
+        #check for file separator character and use the proper one
+        if '\\' in filePath:
+            char = '\\'
+        else:
+            char = '/'
+        
+        filePath = filePath + char + 'files' + char + fileName
+
+        file = open(filePath, 'wb')
+        
+        for segment in segmentList:
+            file.write(segment)
+            
+        file.close()
+        
+        file = open(filePath, 'rb')
+        
+        file.close()
+
