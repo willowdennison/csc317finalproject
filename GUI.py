@@ -3,6 +3,7 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import PhotoImage
 from PIL import Image, ImageTk
+import threading
 
 class GUI:
 
@@ -52,7 +53,8 @@ class GUI:
         self.consoleLabel.grid(column = 6, columnspan = 4, row = 1, rowspan = 4, sticky = (S))
 
         #mainloop is an internal while loop provided by tkinter
-        root.mainloop()
+        guiThread = threading.Thread(target = root.mainloop)
+        guiThread.start()
 
 
     #calls the client's function to get all available videos

@@ -74,3 +74,7 @@ class User:
         if func == 'quit': #closes the connection
             conn.close()
             return 'Connection Closed'
+        
+        if func == 'snd':
+            conn.send(b'stop')
+            return 'Message Sent'
