@@ -271,6 +271,7 @@ class User:
         currentFrame = startFrame
         self.stopQueue = True
         while not self.stopQueue and currentFrame <= endFrame:
+            
             frame  = Frame(
                 FileServer.getVideoFrame(currentFrame, path + '.mp4'), 
                 FileServer.getAudioFrame(currentFrame, path + '.mp3'), currentFrame
