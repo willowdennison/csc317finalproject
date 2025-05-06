@@ -178,6 +178,7 @@ class Client:
         
         while self.recvThreadRunning:
             print('receiving')
+            #frameObj = self.pickleDecode()
             packed_size = self.mainSocket.recv(4)
             print('received')
             if not packed_size:
@@ -240,11 +241,11 @@ class Client:
             
         file.close()
     
-    def pickleDecode(self, conn):
+    def pickleDecode(self):
         list = []
         pickleObject = b''
         while True:
-            data = conn.recv(1024)
+            data = self.mainSocket.recv(1024)
             list.append(data)
             print(f'length of data: {len(data)}')
             if len(data) < 1024:
