@@ -1,36 +1,34 @@
 from socket import*
 import GUI
 import threading
-import queue
 import time 
 import os 
 from videoStream import VideoStream
 
 
-
 class Client:
+    
+    
     def __init__(self):
         self.gui = GUI.GUI(self)# needs to be moved below the connection logic, but after everything is debugged
+       
         self._port = 821
+        
         self.segmentLength = 1024 
 
-        ip = input("Enter host IP")
+        ip = input('Enter host IP')
 
         self.mainSocket = socket(AF_INET, SOCK_STREAM)
-        print("Socket created")
+        print('Socket created')
 
         self.mainSocket.connect((ip, self._port))
-        print("socket connected")
+        print('socket connected')
 
         self.interface = GUI.MainWindow(self)
 
         self.recvThread = None
         
         self.recvThreadRunning = False
-        
-        self.frameQueue = queue.Queue(maxsize=100)  
-       
-        self.activeRequest = None
        
         self.playbackEnabled = False
         
@@ -39,8 +37,7 @@ class Client:
         self.currentVideo = None
 
 
-
-     # sends a list command to the server and receives a list of available videos,recieves the list of vidoes and returns it as a strign 
+    # sends a list command to the server and receives a list of available videos,recieves the list of vidoes and returns it as a strign 
     def listVideo (self):
         
          self.mainSocket.send('list\n'.encode())
@@ -52,7 +49,7 @@ class Client:
          return dirList
 
 
-   # 
+    #Sends request to server to start sending frame objects from vidoeName
     def selectVideo(self, videoName, startFrame , endFrame=None):
 
         if self.recvThread is not None and self.recvThread.is_alive():
@@ -60,36 +57,40 @@ class Client:
             self.recvThreadRunning = False 
             self.recvThread.join()
 
-            msg = f"select\n{videoName}\n{startFrame}"
+            msg = f'select\n{videoName}\n{startFrame}'
             if endFrame is not None:
-                  msg += f"\n{endFrame}"
+                  msg += f'\n{endFrame}'
+            
             self.mainSocket.send(msg.encode())
 
             info = self.mainSocket.recv(1024).decode()
+            info = info.split('\n')
+            fps = info[0].split(':')[1]
+            numFrames = info[1].split(':')[1]
             
-            self.activeRequest = videoName
-            self.frameQueue = queue.Queue(maxsize=100)
+            self.currentVideo = videoName
             self.recvThreadRunning = True
             
-            #change to however this actually gets value from info
-            self.videoStream = VideoStream(info['numFrames'], info['frameRate'], self.gui)
+            self.videoStream = VideoStream(fps, numFrames, self.gui)
             
             if startFrame > 0 or endFrame:
-                self.videoStream.currentRequest = (startFrame, endFrame)
+                self.videoStream.goTo(startFrame, endFrame)
             
-            self.recvThread = threading.Thread( target = self.receive)
+            self.recvThread = threading.Thread(target = self.receive)
             self.recvThread.start()
-   
+
+
     # plays and pauses the video stream
     def playPause(self):
 
-        self.playbackEnabled = not self.playbackEnabled
-       
         if self.playbackEnabled:
+            self.videoStream.pause()
             
+        else:
             self.videoStream.play()
 
-     #sends a request to the server to pause the video stream
+
+    #sends a request to the server to clsoe the concection. 
     def quit(self):
         
         self.mainSocket.send('quit\n'.encode())
@@ -98,15 +99,18 @@ class Client:
         
         print('socket closed')
 
-    def getCurrentTimeStamp(self):
-        timeStamp = time.time()
-        print('Current time stamp:', timeStamp)
-        return timeStamp
 
+    #gets the current time stamp in the video stream.
+    def getCurrentTimeStamp(self):
+       
+        timeStamp = time.time()
+       
+        print('Current time stamp:', timeStamp)
+        
+        return timeStamp
         
         
-        
-    #goes to a specific time in the video stream
+    #goes to a specific timestamp  in the video stream
     def goToVideo(self, timeStamp , frameRate):
        
         frameNum = int(timeStamp * frameRate) # time stamp is in seconds
@@ -118,12 +122,10 @@ class Client:
         else:
             self.selectVideo(self.currentVideo, frameNum)
 
-            while self.frameQueue.qsize() == 0:
-                time.sleep(0.01)
-
             self.videoStream.goTo(frameNum)
            
             self.playbackEnabled = True
+
 
     #Sends file path and file contents, gets filename from file path and adds header flag
     def uploadFile(self, filePath):
@@ -153,30 +155,29 @@ class Client:
             print(item)
     
         return filePath + ' uploaded'
-    
 
-    def recieve(self):
+    
+    # Receives video frames from the server and inserts them into the the video stream for playback.
+    #Stops receiving frames if the video chnages or no data is changed. 
+    def receive(self):
+        
+        originalVideo = self.currentVideo
+        
         while self.recvThreadRunning:
 
             frameObj = self.mainSocket.recv(1024)
             if not frameObj:
-                break
-            if not self.frameQueue.full():
-                self.frameQueue.put(frameObj)
-            else:
-                self.mainSocket.send('Pause Video\n'.encode())
+               break
 
             if self.videoStream:
                 self.videoStream.insertFrame(frameObj)
 
-            while  self.videoStream.currentFrame  > 20 and not self.frameQueue.empty():
-                self.frameQueue.get()
-
-            if self.activeRequest != self.currentVideo:
+            if self.currentVideo != originalVideo:
+                self.mainSocket.send('stp'.encode())
                 break 
     
 
-    # takes a file object, transforms the file into a list of maximum length 1024 byte data segments, encoded to be sent over a socket
+    #takes a file object, transforms the file into a list of maximum length 1024 byte data segments, encoded to be sent over a socket
     def encodeFile(self, file):
         
         file.seek(0, os.SEEK_END)
@@ -196,6 +197,7 @@ class Client:
             
         return segments
     
+
     #decodes a segmentList from downloadFile() and saves it to fileName
     def decodeFile(self, segmentList, fileName):
         
@@ -217,10 +219,8 @@ class Client:
             file.write(segment)
             
         file.close()
-        
-        file = open(filePath, 'rb')
-        
-        file.close()
 
-if __name__ == "__main__":
+
+
+if __name__ == '__main__':
     client = Client()

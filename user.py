@@ -1,6 +1,7 @@
 from threading import Thread
 from server import FileServer
 from frame import Frame
+import os
 
 class User:
 
@@ -15,25 +16,34 @@ class User:
         
         self.stopQueue = False
     
-    
-    #loop to recieve messages from client and send them to request handler
+    #thread for receiving messages, calls handleRequest with the message
     def recvLoop(self):
         while True:
             req = self._conn.recv(1024).decode()
             print(self.handleRequest(req))
 
+    #sends frames to client starting at startFrame, and ending at endFrame
+    def sendFrameLoop(self, conn, startFrame, endFrame, videoName):
 
-    #takes a conn, start
-    def sendFrameLoop(self, conn, startFrame, endFrame, filePath):
+        path = os.getcwd()
+
+        if '/' in path:
+            char = '/'
+        else:
+            char = '\\'
+        
+        path = path + char + videoName + char
+
+        FileServer.sendFile(path + 'info.txt', conn)
 
         currentFrame = startFrame
-        self.stopQueue = False
+        self.stopQueue = True
         while not self.stopQueue and currentFrame <= endFrame:
-            frame  = Frame(self.getVideoFrame(currentFrame, filePath), self.getAudioFrame(currentFrame, filePath), currentFrame)
+            frame  = Frame(FileServer.getVideoFrame(currentFrame, path + '.mp4'), FileServer.getAudioFrame(currentFrame, path + '.mp3'), currentFrame)
             FileServer.sendFrame(frame, conn)
             currentFrame += 1
 
-
+    #calls different functions based on what client sends
     def handleRequest(self, req, conn):
 
         func = req.split('\n')[0]
@@ -52,15 +62,15 @@ class User:
             self.stopQueue = True
             return 'Stopped sending'
         
-        if func == 'fn':
+        if func == 'fn': #receives video from client
             fileName = req.split('\n')[1]
             FileServer.receiveVideo(conn, fileName)
             return 'File Downloaded'
         
-        if func == 'list':
+        if func == 'list': #sends the directory to client
             conn.send(FileServer.listDir().encode())
             return 'Directory Sent'
         
-        if func == 'quit':
+        if func == 'quit': #closes the connection
             conn.close()
             return 'Connection Closed'

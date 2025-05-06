@@ -3,6 +3,8 @@ import threading
 import os
 import subprocess
 from user import User
+import cv2
+import pickle
 
 class FileServer:
 
@@ -111,12 +113,16 @@ class FileServer:
             
             segmentList.append(data)
 
-            if len(data) == 0:
+            if len(data) < 1024:
                 self.decodeVideo(segmentList, fileName, directoryName + char)
 
                 if doPrint:
-                    (f'{fileName} received, creating mp3 file')
+                    print(f'{fileName} received, creating mp3 file')
                 self.createMP3(fileName, directoryName)
+
+                self.createInfo(fileName, directoryName)
+                if doPrint:
+                    print(f'{fileName} info created')
     
     #creates an mp3 file in the same folder as the given mp4 file
     def createMP3(self, fileName, directoryName, doPrint = True):
@@ -160,4 +166,38 @@ class FileServer:
     
     #calls user
     def createUserThread(self, conn):
-        user = User(conn)
+        User(conn)
+    
+    #uses frameRate and frameNumber to get the time stamp in milliseconds
+    def getTimeStamp(self, frameRate, frameNumber):
+        seconds = frameNumber / frameRate
+        return seconds * 1000
+    
+    #creates info.txt, containing the fps and the total number of frames in format:
+    #fps:___\nframes:___
+    def createInfo(self, fileName, dirName):
+
+        info = open(dirName + 'info.txt', 'w')
+        
+        cap = cv2.VideoCapture(dirName + fileName)
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        count = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+        
+        info.write(f'fps:{fps}\nframes:{count}')
+        info.close()
+
+    def getVideoFrame(frameInput, videoPath):
+
+        cap = cv2.VideoCapture(videoPath)
+
+        print(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frameInput-1)
+        ret, frame = cap.read()
+        frame = cv2.resize(frame, (640, 480))
+
+        ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
+        
+        data = pickle.dumps(buffer)
+
+        return data

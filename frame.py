@@ -6,7 +6,7 @@ class Frame:
     #stores them in a Frame object to be dumped to a pickle file
     def __init__(self, img:bytes, audio:bytes, frameNum:int):
         
-        self.img = img
+        self.img = pickle.loads(img)
         self.audio = audio
         self.frameNum = frameNum
         

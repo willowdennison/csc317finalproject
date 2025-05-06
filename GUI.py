@@ -10,11 +10,10 @@ class GUI:
         self.client = clnt
         root = Tk()
 
+        #sets default window size and name
         root.geometry("1200x500")
         root.title("You2be")
-        root.columnconfigure(0, weight = 1)
-        root.rowconfigure(0, weight = 1)
-        #sets default window size to 700w x 500h, with a name
+
 
         #instantiating all stringvars here, so they can be accessed by labels & functions called by buttons
         self.msgQueueMaxLength = 10
@@ -24,7 +23,7 @@ class GUI:
 
         #creating a frame on the root so grid can assign elements to different col/rows
         self.commandFrame = ttk.Frame(root, padding = "3 3 12 12")
-        self.commandFrame.grid(column = 0, row = 0, sticky = (N))
+        self.commandFrame.grid(column = 0, row = 0)
 
         #creating and placing all buttons, inputs, the image and the debugging console
         ttk.Button(self.commandFrame, text = "List All Videos", command = self.listAvailableVideos).grid(column = 0,columnspan = 2, row = 0, sticky = W)
@@ -32,7 +31,7 @@ class GUI:
         ttk.Button(self.commandFrame, text = "Select", command = self.selectVideo).grid(column = 0, row = 1, sticky = W)
         ttk.Label(self.commandFrame, text = "Select Video").grid(column = 1, row = 1, sticky = W)
         videoNameEntry = ttk.Entry(self.commandFrame, width = 20, textvariable = self.videoName)
-        videoNameEntry.grid(column = 0,columnspan = 2, row = 2, sticky = (W, E))
+        videoNameEntry.grid(column = 0, columnspan = 2, row = 2, sticky = (W, E))
 
         ttk.Button(self.commandFrame, text = "Upload", command = self.uploadVideo).grid(column = 0, row = 3, sticky = W)
         ttk.Label(self.commandFrame, text = "Upload Video").grid(column = 1, row = 3, sticky = W)
@@ -42,7 +41,12 @@ class GUI:
         image1 = Image.open("sun.png")
         test = ImageTk.PhotoImage(image1)
         self.mainImage = tkinter.Label(image = test)
-        self.mainImage.grid(column = 2, columnspan = 4, row = 1,rowspan = 4, sticky = N)
+        self.mainImage.grid(column = 0, columnspan = 4, row = 0, rowspan = 4, sticky = (N))
+
+        ttk.Button(self.commandFrame, text = "<- 10s", command = self.goBackward).grid(column = 2, row = 5, sticky = E)
+        ttk.Button(self.commandFrame, text = "Play/Pause", command = self.playPauseButton).grid(column = 3, row = 5)
+        ttk.Button(self.commandFrame, text = "10s ->", command = self.goForward).grid(column = 4, row = 5, sticky = W)
+
 
         self.consoleLabel = ttk.Label(self.commandFrame, text = "console square", font = ("Consolas",10), background = 'Gray')
         self.consoleLabel.grid(column = 6, columnspan = 4, row = 1, rowspan = 4, sticky = (S))
@@ -67,7 +71,7 @@ class GUI:
 
 
     #calls the client's function to move playback frame backwards by 10 seconds(frames*fps)
-    def goBack(self):
+    def goBackward(self):
         self.client.goToVideo(self.client.getCurrentTimestamp() - 10)
 
 
@@ -78,7 +82,7 @@ class GUI:
 
     #calls client function to upload a video from a given path
     def uploadVideo(self):
-        self.client.uploadVideo(self.uploadPath)
+        self.client.uploadFile(self.uploadPath)
 
     #calls client function to stop the program, release RAM, etc
     def quit(self):

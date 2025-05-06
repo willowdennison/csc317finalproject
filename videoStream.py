@@ -20,7 +20,7 @@ class VideoStream:
         
         #array for frame images
         self.frames = [None] * numFrames
-        self.audioStream = pyaudio.PyAudio.open(rate=fps, input=True, output=True)
+        self.audioStream = pyaudio.PyAudio.open(rate=fps, input=True, output=True, start=False)
         
         self.gui = gui
         
@@ -48,6 +48,8 @@ class VideoStream:
             
             if self.play and not self.buffer:
                 
+                self.audioStream.start_stream()
+                
                 #wait the appropriate time between frames
                 if time.time() >= lastFrameTime + waitTime:
                     
@@ -57,6 +59,9 @@ class VideoStream:
                     self.render(self.frames[self.position])
                     
                     self.cleanBuffer()
+                    
+            else:
+                self.audioStream.stop_stream()
                     
     
     #checks if the frame 1 minute ahead of current position is available
@@ -110,6 +115,6 @@ class VideoStream:
         
     
     #sets self.position to frameNum and starts playing from there
-    def goTo(self, frameNum:int):
-        self.currentRequest = (frameNum, None)
+    def goTo(self, frameNum:int, endFrame:int = None):
+        self.currentRequest = (frameNum, endFrame)
         self.position = frameNum
