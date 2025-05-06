@@ -76,5 +76,5 @@ class User:
             return 'Connection Closed'
         
         if func == 'snd':
-            conn.send(b'stop')
+            conn.send(b'')
             return 'Message Sent'

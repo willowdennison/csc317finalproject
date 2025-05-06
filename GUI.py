@@ -114,3 +114,20 @@ class GUI:
 
         self.consoleLabel.config(text = txt)
 
+
+class VideoPlayer:
+    def __init__(self):
+        root = Tk()
+        #sets default window size and name
+        root.geometry("1200x500")
+        root.title("You2be")
+        #creating a frame on the root so grid can assign elements to different col/rows
+        self.commandFrame = ttk.Frame(root, padding = "3 3 12 12")
+        self.commandFrame.grid(column = 0, row = 0)
+
+        self.mainImage = ttk.Label(self.commandFrame).grid(column = 0, row = 0)
+
+        root.mainloop()
+
+    def showImage(self, img):
+        self.mainImage.config(image = img)

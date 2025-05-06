@@ -23,9 +23,6 @@ class Client:
         self.mainSocket.connect(('192.168.0.100', self._port))
         print('socket connected')
 
-        self.recvThread = threading.Thread(target = self.receive)
-        self.recvThread.start()
-
         self.recvThreadRunning = False
        
         self.playbackEnabled = False
@@ -33,6 +30,9 @@ class Client:
         self.videoStream = None
        
         self.currentVideo = None
+
+        self.recvThread = threading.Thread(target = self.receive)
+        self.recvThread.start()
 
         self.interface = GUI.GUI(self)
 
@@ -54,7 +54,7 @@ class Client:
         
         self.recvThreadRunning = False 
 
-        self.mainSocket.send(b'snd')
+        time.sleep(0.01)
 
         msg = f'select\n{videoName}\n{startFrame}'
         if endFrame is not None:
@@ -62,15 +62,17 @@ class Client:
         
         self.mainSocket.send(msg.encode())
 
+        print('waiting to receive info')
+
         info = self.mainSocket.recv(1024).decode()
         info = info.split('\n')
+        print(f'info: {info}')
         fps = info[0].split(':')[1]
         numFrames = info[1].split(':')[1]
         
         self.currentVideo = videoName
         self.recvThreadRunning = True
-            
-        self.videoStream = VideoStream(fps, numFrames, self.gui)
+        self.videoStream = VideoStream(fps, numFrames)
             
         if startFrame > 0 or endFrame:
             self.videoStream.goTo(startFrame, endFrame)
@@ -201,7 +203,7 @@ class Client:
     #decodes a segmentList from downloadFile() and saves it to fileName
     def decodeFile(self, segmentList, fileName):
         
-        print(segmentList)
+        print(f'segment list: {segmentList}')
     
         filePath = os.getcwd()
         
