@@ -3,6 +3,7 @@ import threading
 import os
 import cv2
 import pickle
+import wave
 from frame import Frame
 from moviepy import VideoFileClip
 
@@ -228,6 +229,18 @@ class FileServer:
         data = pickle.dumps(buffer)
 
         return data
+    
+    #gets the audio frames that play during the video frame requested
+    def getAudioFrame(frameInput, audioPath, fps):
+        wf = wave.open(audioPath, 'rb')
+        frameRate = wf.getframerate()
+
+        chunk = frameRate / fps
+        start = frameInput * chunk
+        wf.setpos(start)
+        audioFrame = wf.readframes(chunk)
+    
+        return(audioFrame)
         
         
 class User:
@@ -264,19 +277,17 @@ class User:
         else:
             char = '\\'
         
-        path = path + char + videoName + char
+        path = path + char + 'files' + char + videoName + char
 
         FileServer.sendFile(path + 'info.txt', self._conn)
+        info = open(path + 'info.txt')
+
+        fps = info.split('\n')[0].split(':')[1]
 
         currentFrame = startFrame
         self.stopQueue = True
         while not self.stopQueue and currentFrame <= endFrame:
-            
-            frame  = Frame(
-                FileServer.getVideoFrame(currentFrame, path + '.mp4'), 
-                FileServer.getAudioFrame(currentFrame, path + '.mp3'), currentFrame
-            )
-            
+            frame  = Frame(FileServer.getVideoFrame(currentFrame, path + '.mp4'), FileServer.getAudioFrame(currentFrame, path + '.mp3', fps), currentFrame)
             FileServer.sendFrame(frame, self._conn)
             currentFrame += 1
 

@@ -17,7 +17,7 @@ framerate = wf.getframerate()
 print(framerate)
 for i in range(100):
     wf.setpos(int(start))
-    data = wf.readframes(int((end - start)))
+    #data = wf.readframes(int((end - start)))
     data = wf.readframes(CHUNK)
     out_stream.write(data)
     start +=CHUNK
@@ -25,6 +25,11 @@ for i in range(100):
 
 def getAudioFrame(fps, inputFrame, audioPath):
     wf = wave.open(audioPath, 'rb')
-    framewf.getframerate()
+    frameRate = wf.getframerate()
 
-    return
+    chunk = frameRate / fps
+    start = inputFrame * chunk
+    wf.setpos(start)
+    audioFrame = wf.readframes(chunk)
+    
+    return(audioFrame)
