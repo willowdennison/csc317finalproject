@@ -1,12 +1,13 @@
 from socket import *
 import threading
 import os
-import subprocess
 import cv2
 import pickle
 from frame import Frame
+from moviepy import VideoFileClip
 
 class FileServer:
+
 
     def __init__(self):
 
@@ -15,7 +16,7 @@ class FileServer:
         self.mainSocket = socket(AF_INET, SOCK_STREAM)
         print('Socket Connected')
 
-        self.mainSocket.bind('', port)
+        self.mainSocket.bind(('', port))
         print('Socket Bound')
 
         self.mainSocket.listen(5)
@@ -25,6 +26,7 @@ class FileServer:
         connectThread = threading.Thread(target = self.connect)
         connectThread.start()
 
+
     #runs in a thread to constantly connect clients and creates the user thread
     def connect(self):
 
@@ -33,7 +35,8 @@ class FileServer:
             conn, clientAddress = self.mainSocket.accept()
             print('Connected to: ', clientAddress)
 
-            self.createUserThread(conn)
+            FileServer.createUserThread(conn)
+      
         
     #DOES NOT CHECK FOR FILE PATH MISSING for efficiency, will only be run if we know exactly where each frame is located b/c it will stop 
     #sending files if something goes wrong and crash the client and the thread
@@ -43,6 +46,7 @@ class FileServer:
 
         for item in segmentList:
             conn.send(item)
+    
     
     #sends a file, fileName, to the client, in max length 1024 byte segments
     def sendFile(self, fileName, conn):
@@ -68,6 +72,7 @@ class FileServer:
         for item in segmentList:
             conn.send(item)
     
+    
     #gives a list of the names of the files/directories in the folder
     def listDir():
 
@@ -80,8 +85,9 @@ class FileServer:
 
         return formattedDir
     
+    
     #receives a video in mulitple messages, runs decodeVideo with those messages in a list and then runs createMP3 with the file created from decodeVideo
-    def receiveVideo(self, conn, fileName, doPrint = True):
+    def receiveVideo(conn, fileName, doPrint = True):
         
         path  = os.getcwd()
 
@@ -91,9 +97,9 @@ class FileServer:
             char = '\\'
 
         directoryName = path + char + 'files' + char + fileName.split('.')[0]
+        
         try:
-
-            os.makedirs(directoryName, exists_ok = False)
+            os.makedirs(directoryName, exist_ok = False)
 
         except FileExistsError:
 
@@ -103,11 +109,11 @@ class FileServer:
             while not dirMade:
 
                 try:
-
                     os.makedirs(directoryName + '(' + str(num) + ')', exist_ok = False)
                     dirMade = True
                     fileName = fileName.split('.')[0] + '(' + str(num) + ')' + fileName.split('.')[1]
-
+                    directoryName = directoryName + '(' + str(num) + ')'
+                    
                 except FileExistsError:
                     
                     num += 1
@@ -120,30 +126,37 @@ class FileServer:
             data = conn.recv(1024)
             
             segmentList.append(data)
+            if doPrint:
+                print(data)
 
-            if len(data) == 0:
-                self.decodeVideo(segmentList, fileName, directoryName)
+            if len(data) < 1024:
+                FileServer.decodeVideo(segmentList, fileName, directoryName)
 
                 if doPrint:
                     print(f'{fileName} received, creating mp3 file')
-                self.createMP3(fileName.split('.')[0], directoryName)
+                FileServer.createMP3(fileName.split('.')[0], directoryName)
 
-                self.createInfo(fileName, directoryName)
+                FileServer.createInfo(fileName, directoryName)
                 if doPrint:
                     print(f'{fileName} info created')
                 return
     
+    
     #creates an mp3 file in the same folder as the given mp4 file
     def createMP3(fileName, directoryName, doPrint = True):
+        
+        print('createMP3')
+        
         videoPath = directoryName + fileName + '.mp4'
         audioPath = directoryName + fileName + '.mp3'
 
-        command = "ffmpeg -i {} -vn -ar 44100 -ac 1 -b:a 192k {}".format(videoPath, audioPath)
+        video = VideoFileClip(videoPath)
 
-        subprocess.call(command, shell=True)
+        video.audio.write_audiofile(audioPath)
         
         if doPrint:
             print("MP3 File created at: " + audioPath)
+
 
     #gets a file ready for sending by splitting the message into multiple messages, returns a list of byte-wise strings
     def encodeFile(self, file):
@@ -163,6 +176,7 @@ class FileServer:
         
         return segments
     
+    
     #takes a segmentList, writes it into directoryPath as an mp4 file
     def decodeVideo(segmentList, fileName, directoryPath):
         filePath = directoryPath + fileName + '.mp4'
@@ -172,10 +186,14 @@ class FileServer:
             file.write(segment)
         
         file.close()
+        
+        print('end decodeVideo')
+    
     
     #calls user
     def createUserThread(conn):
         User(conn)
+   
     
     #creates info.txt, containing the fps and the total number of frames in format:
     #fps:___\nframes:___
@@ -189,6 +207,7 @@ class FileServer:
         
         info.write(f'fps:{fps}\nframes:{count}')
         info.close()
+
 
     def getVideoFrame(frameInput, videoPath):
 
@@ -206,6 +225,8 @@ class FileServer:
 
         return data
 
+
+
 class User:
 
     
@@ -214,19 +235,24 @@ class User:
         
         self.activeRequest = None
         
-        self.userThread = threading.Thread(target = self.recvLoop,args = (conn,))
+        self.userThread = threading.Thread(target = self.recvLoop)
         self.userThread.start()
         
         self.stopQueue = False
     
+    
     #thread for receiving messages, calls handleRequest with the message
-    def recvLoop(self, conn):
+    def recvLoop(self):
         while True:
             req = self._conn.recv(1024).decode()
-            print(self.handleRequest(req))
+            response = self.handleRequest(req)
+            
+            if response:
+                print(response)
+
 
     #sends frames to client starting at startFrame, and ending at endFrame
-    def sendFrameLoop(self, conn, startFrame, endFrame, videoName):
+    def sendFrameLoop(self, startFrame, endFrame, videoName):
 
         path = os.getcwd()
 
@@ -237,17 +263,18 @@ class User:
         
         path = path + char + videoName + char
 
-        FileServer.sendFile(path + 'info.txt', conn)
+        FileServer.sendFile(path + 'info.txt', self._conn)
 
         currentFrame = startFrame
         self.stopQueue = True
         while not self.stopQueue and currentFrame <= endFrame:
             frame  = Frame(FileServer.getVideoFrame(currentFrame, path + '.mp4'), FileServer.getAudioFrame(currentFrame, path + '.mp3'), currentFrame)
-            FileServer.sendFrame(frame, conn)
+            FileServer.sendFrame(frame, self._conn)
             currentFrame += 1
 
+
     #calls different functions based on what client sends
-    def handleRequest(self, req, conn):
+    def handleRequest(self, req, doPrint = True):
 
         func = req.split('\n')[0]
         
@@ -258,7 +285,7 @@ class User:
                 endFrame = int(req.split('\n')[3])
             except IndexError:
                 endFrame = None
-            self.sendFrameLoop(conn, startFrame, endFrame, filePath)
+            self.sendFrameLoop(self._conn, startFrame, endFrame, filePath)
             return 'Started playing function at the {frame} frame'
         
         if func == 'stp': #calls after the client wants server to stop sending the file
@@ -267,13 +294,19 @@ class User:
         
         if func == 'fn': #receives video from client
             fileName = req.split('\n')[1]
-            FileServer.receiveVideo(conn, fileName)
+            print(fileName)
+            FileServer.receiveVideo(self._conn, fileName, doPrint)
             return 'File Downloaded'
         
         if func == 'list': #sends the directory to client
-            conn.send(FileServer.listDir().encode())
+            self._conn.send(FileServer.listDir().encode())
             return 'Directory Sent'
         
         if func == 'quit': #closes the connection
-            conn.close()
+            self._conn.close()
             return 'Connection Closed'
+
+
+
+if __name__ == '__main__':
+    FileServer()
