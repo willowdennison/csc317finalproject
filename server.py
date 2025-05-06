@@ -8,6 +8,7 @@ import pickle
 
 class FileServer:
 
+
     def __init__(self):
 
         port = 821
@@ -25,6 +26,7 @@ class FileServer:
         connectThread = threading.Thread(Target = self.connect)
         connectThread.start()
 
+
     #runs in a thread to constantly connect clients and creates the user thread
     def connect(self):
 
@@ -34,6 +36,7 @@ class FileServer:
             print('Connected to: ', clientAddress)
 
             self.createUserThread(conn)
+
 
     #opens the file, if opens for writing, opens without checking if the path exists. Otherwise, if the file does not exist, raises FileNotFoundError
     def openFile(self, fileName, permissions):
@@ -55,6 +58,7 @@ class FileServer:
         
         else:
             raise(FileNotFoundError)
+      
         
     #DOES NOT CHECK FOR FILE PATH MISSING for efficiency, will only be run if we know exactly where each frame is located b/c it will stop 
     #sending files if something goes wrong and crash the client and the thread
@@ -64,6 +68,7 @@ class FileServer:
 
         for item in segmentList:
             conn.send(item)
+    
     
     #sends a file, fileName, to the client, in max length 1024 byte segments
     def sendFile(self, fileName, conn):
@@ -80,6 +85,7 @@ class FileServer:
         for item in segmentList:
             conn.send(item)
     
+    
     #gives a list of the names of the files/directories in the folder
     def listDir(self):
 
@@ -91,6 +97,7 @@ class FileServer:
             formattedDir = formattedDir + item + '\n'
 
         return formattedDir
+    
     
     #receives a video in mulitple messages, runs decodeVideo with those messages in a list and then runs createMP3 with the file created from decodeVideo
     def receiveVideo(self, conn, fileName, doPrint = True):
@@ -123,7 +130,8 @@ class FileServer:
                 self.createInfo(fileName, directoryName)
                 if doPrint:
                     print(f'{fileName} info created')
-    
+
+
     #creates an mp3 file in the same folder as the given mp4 file
     def createMP3(self, fileName, directoryName, doPrint = True):
         videoPath = directoryName + fileName + '.mp4'
@@ -135,6 +143,7 @@ class FileServer:
         
         if doPrint:
             print("MP3 File created at: " + audioPath)
+
 
     #gets a file ready for sending by splitting the message into multiple messages, returns a list of byte-wise strings
     def encodeFile(self, file):
@@ -154,6 +163,7 @@ class FileServer:
         
         return segments
     
+    
     #takes a segmentList, writes it into directoryPath as an mp4 file
     def decodeVideo(self, segmentList, fileName, directoryPath):
         filePath = directoryPath + fileName + '.mp4'
@@ -164,14 +174,17 @@ class FileServer:
         
         file.close()
     
+    
     #calls user
     def createUserThread(self, conn):
         User(conn)
+    
     
     #uses frameRate and frameNumber to get the time stamp in milliseconds
     def getTimeStamp(self, frameRate, frameNumber):
         seconds = frameNumber / frameRate
         return seconds * 1000
+    
     
     #creates info.txt, containing the fps and the total number of frames in format:
     #fps:___\nframes:___
@@ -185,6 +198,7 @@ class FileServer:
         
         info.write(f'fps:{fps}\nframes:{count}')
         info.close()
+
 
     def getVideoFrame(frameInput, videoPath):
 
@@ -201,3 +215,8 @@ class FileServer:
         data = pickle.dumps(buffer)
 
         return data
+    
+    
+    
+if __name__ == '__main__':
+    FileServer()
