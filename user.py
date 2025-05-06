@@ -1,43 +1,26 @@
 from threading import Thread
-from queue import Queue
 from server import FileServer
 from frame import Frame
 
 class User:
+
     
-    def __init__(self, conn, server:FileServer):
+    def __init__(self, conn):
         self._conn = conn
-        self._server = server
         
         self.activeRequest = None
-        self.sendQueue = Queue()
         
-        self.sendThread = Thread(target = self.sendLoop)
-        self.sendThread.start()
-        
-        self.recvThread = Thread(target = self.recvLoop)
-        self.recvThread.start()
+        self.userThread = Thread(target = self.recvLoop)
+        self.userThread.start()
         
         self.stopQueue = False
-    
-    
-    #i dont know if this will work for sending video frames unless we straight up add them to the queue
-    def sendLoop(self):
-        while True:
-            if not self.sendQueue.empty():
-                self._conn.send(self.sendQueue.pop().encode())
     
     
     def recvLoop(self):
         while True:
             req = self._conn.recv(1024).decode()
-            response = self.handleRequest(req)
-            
-            #if response is a video request with frames
-                #self.activeRequest = (startFrame, endFrame)
-            
-            if response: 
-                self.sendQueue.put(response)
+            print(self.handleRequest(req))
+
 
     def sendFrameLoop(self, conn, startFrame, endFrame, filePath):
 
@@ -45,8 +28,9 @@ class User:
         self.stopQueue = True
         while not self.stopQueue and currentFrame <= endFrame:
             frame  = Frame(self.getVideoFrame(currentFrame, filePath), self.getAudioFrame(currentFrame, filePath), currentFrame)
-            FileServer.sendFrame(self, frame, conn)
+            FileServer.sendFrame(frame, conn)
             currentFrame += 1
+
 
     def handleRequest(self, req, conn):
 
@@ -59,7 +43,7 @@ class User:
                 endFrame = int(req.split('\n')[3])
             except IndexError:
                 endFrame = None
-            self.sendFrameLoop(self, conn, startFrame, endFrame, filePath)
+            self.sendFrameLoop(conn, startFrame, endFrame, filePath)
             return 'Started playing function at the {frame} frame'
         
         if func == 'stp': #calls after the client wants server to stop sending the file
