@@ -95,7 +95,7 @@ class GUI:
 
 
     #available for client to call to make video appear in GUI
-    def setFrame(self, img):
+    def showImage(self, img):
         self.mainImage.config(image = img)
 
 
