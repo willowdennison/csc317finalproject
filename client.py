@@ -10,7 +10,6 @@ class Client:
     
     
     def __init__(self):
-        #self.gui = GUI.GUI(self)# needs to be moved below the connection logic, but after everything is debugged
        
         self._port = 821
         

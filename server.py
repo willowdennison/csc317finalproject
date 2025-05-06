@@ -134,9 +134,10 @@ class FileServer:
 
                 if doPrint:
                     print(f'{fileName} received, creating mp3 file')
+                    
                 FileServer.createMP3(fileName.split('.')[0], directoryName)
 
-                FileServer.createInfo(fileName, directoryName)
+
                 if doPrint:
                     print(f'{fileName} info created')
                 return
@@ -153,6 +154,8 @@ class FileServer:
         video = VideoFileClip(videoPath)
 
         video.audio.write_audiofile(audioPath)
+        
+        FileServer.createInfo(video, directoryName)
         
         if doPrint:
             print("MP3 File created at: " + audioPath)
@@ -197,13 +200,14 @@ class FileServer:
     
     #creates info.txt, containing the fps and the total number of frames in format:
     #fps:___\nframes:___
-    def createInfo(fileName, dirName):
+    def createInfo(video, dirName):
 
         info = open(dirName + 'info.txt', 'w')
         
-        cap = cv2.VideoCapture(dirName + fileName)
-        fps = cap.get(cv2.CAP_PROP_FPS)
-        count = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+
+        fps = video.fps()
+        duration = video.duration()
+        count = duration * fps
         
         info.write(f'fps:{fps}\nframes:{count}')
         info.close()
@@ -224,9 +228,8 @@ class FileServer:
         data = pickle.dumps(buffer)
 
         return data
-
-
-
+        
+        
 class User:
 
     
