@@ -4,6 +4,7 @@ import threading
 import time 
 import os 
 from videoStream import VideoStream
+import pickle
 
 
 class Client:
@@ -31,8 +32,8 @@ class Client:
        
         self.currentVideo = None
 
-        self.recvThread = threading.Thread(target = self.receive)
-        self.recvThread.start()
+        recvThread = threading.Thread(target = self.receive)
+        recvThread.start()
 
         self.interface = GUI.GUI(self)
 
@@ -76,8 +77,9 @@ class Client:
             
         if startFrame > 0 or endFrame:
             self.videoStream.goTo(startFrame, endFrame)
-
-        self.recvThread.start()
+        
+        recvThread = threading.Thread(target=self.receive)
+        recvThread.start()
 
 
 
@@ -166,8 +168,10 @@ class Client:
         originalVideo = self.currentVideo
         
         while self.recvThreadRunning:
-
-            frameObj = self.mainSocket.recv(1024)
+            print('receiving')
+            frameObj = self.pickleDecode(self.mainSocket)
+            print('received')
+            
             if not frameObj:
                break
 
@@ -221,6 +225,22 @@ class Client:
             file.write(segment)
             
         file.close()
+    
+    def pickleDecode(self, conn):
+        list = []
+        pickleObject = b''
+        while True:
+            data = conn.recv(1024)
+            list.append(data)
+            print(f'length of data: {len(data)}')
+            if len(data) < 1024:
+
+                for item in list:
+
+                    pickleObject = pickleObject + item
+
+                print(pickleObject)
+                return pickle.loads(pickleObject)
 
 
 
