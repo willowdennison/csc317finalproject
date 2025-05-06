@@ -111,7 +111,7 @@ class FileServer:
                 try:
                     os.makedirs(directoryName + '(' + str(num) + ')', exist_ok = False)
                     dirMade = True
-                    fileName = fileName.split('.')[0] + '(' + str(num) + ')' + fileName.split('.')[1]
+                    fileName = fileName.split('.')[0] + '(' + str(num) + ')'
                     directoryName = directoryName + '(' + str(num) + ')'
                     
                 except FileExistsError:
