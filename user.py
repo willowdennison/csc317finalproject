@@ -16,16 +16,18 @@ class User:
         self.stopQueue = False
     
     
+    #loop to recieve messages from client and send them to request handler
     def recvLoop(self):
         while True:
             req = self._conn.recv(1024).decode()
             print(self.handleRequest(req))
 
 
+    #takes a conn, start
     def sendFrameLoop(self, conn, startFrame, endFrame, filePath):
 
         currentFrame = startFrame
-        self.stopQueue = True
+        self.stopQueue = False
         while not self.stopQueue and currentFrame <= endFrame:
             frame  = Frame(self.getVideoFrame(currentFrame, filePath), self.getAudioFrame(currentFrame, filePath), currentFrame)
             FileServer.sendFrame(frame, conn)
