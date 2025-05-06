@@ -1,7 +1,7 @@
 from threading import Thread
 import time
 from frame import Frame
-from GUI import GUI
+import GUI
 import pyaudio
 
 
@@ -10,7 +10,7 @@ class VideoStream:
     
     #takes the total number of frames in the video, the framerate in frames per second,
     #and the gui object to play video on
-    def __init__(self, numFrames:int, fps:int, gui:GUI):
+    def __init__(self, numFrames:int, fps:int):
         
         self.frameRate = fps
         self.position = 0
@@ -19,10 +19,12 @@ class VideoStream:
         self.currentRequest = (0, None)
         
         #array for frame images
-        self.frames = [None] * numFrames
-        self.audioStream = pyaudio.PyAudio.open(rate=fps, input=True, output=True, start=False)
+        print(numFrames)
+        self.frames = [None] * int(float(numFrames))
+        p = pyaudio.PyAudio()
+        self.audioStream = p.open(format=p.get_format_from_width(2), channels=2,rate=44100,output=True,frames_per_buffer=(round(44100/int(fps))))
         
-        self.gui = gui
+        self.gui = GUI.VideoPlayer(self)
         
         #should the play loop be playing or buffering?
         self.play = False

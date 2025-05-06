@@ -15,18 +15,14 @@ class Client:
         
         self.segmentLength = 1024 
 
-        ip = input('Enter host IP: ')
+        #ip = input('Enter host IP: ')
 
         self.mainSocket = socket(AF_INET, SOCK_STREAM)
         print('Socket created')
 
-        self.mainSocket.connect((ip, self._port))
+        self.mainSocket.connect(('192.168.0.100', self._port))
         print('socket connected')
 
-        self.interface = GUI.GUI(self)
-
-        self.recvThread = None
-        
         self.recvThreadRunning = False
        
         self.playbackEnabled = False
@@ -34,6 +30,11 @@ class Client:
         self.videoStream = None
        
         self.currentVideo = None
+
+        self.recvThread = threading.Thread(target = self.receive)
+        self.recvThread.start()
+
+        self.interface = GUI.GUI(self)
 
 
     # sends a list command to the server and receives a list of available videos,recieves the list of vidoes and returns it as a strign 
@@ -43,40 +44,41 @@ class Client:
 
          data = self.mainSocket.recv(1024).decode() 
 
-         dirList = 'Vidoes avaiable on server:\n' + data
+         dirList = 'Videos avaiable on server:\n' + data
          
          return dirList
 
 
     #Sends request to server to start sending frame objects from vidoeName
     def selectVideo(self, videoName, startFrame , endFrame=None):
+        
+        self.recvThreadRunning = False 
 
-        if self.recvThread is not None and self.recvThread.is_alive():
-           
-            self.recvThreadRunning = False 
-            self.recvThread.join()
+        time.sleep(0.01)
 
-            msg = f'select\n{videoName}\n{startFrame}'
-            if endFrame is not None:
-                  msg += f'\n{endFrame}'
-            
-            self.mainSocket.send(msg.encode())
+        msg = f'select\n{videoName}\n{startFrame}'
+        if endFrame is not None:
+              msg += f'\n{endFrame}'
+        
+        self.mainSocket.send(msg.encode())
 
-            info = self.mainSocket.recv(1024).decode()
-            info = info.split('\n')
-            fps = info[0].split(':')[1]
-            numFrames = info[1].split(':')[1]
+        print('waiting to receive info')
+
+        info = self.mainSocket.recv(1024).decode()
+        info = info.split('\n')
+        print(f'info: {info}')
+        fps = info[0].split(':')[1]
+        numFrames = info[1].split(':')[1]
+        
+        self.currentVideo = videoName
+        self.recvThreadRunning = True
+        self.videoStream = VideoStream(fps, numFrames)
             
-            self.currentVideo = videoName
-            self.recvThreadRunning = True
-            
-            self.videoStream = VideoStream(fps, numFrames, self.gui)
-            
-            if startFrame > 0 or endFrame:
-                self.videoStream.goTo(startFrame, endFrame)
-            
-            self.recvThread = threading.Thread(target = self.receive)
-            self.recvThread.start()
+        if startFrame > 0 or endFrame:
+            self.videoStream.goTo(startFrame, endFrame)
+
+        self.recvThread.start()
+
 
 
     # plays and pauses the video stream
@@ -128,7 +130,7 @@ class Client:
 
     #Sends file path and file contents, gets filename from file path and adds header flag
     def uploadFile(self, filePath):
-        
+
         if os.path.exists(filePath): 
             file = open(filePath, 'rb')
             
@@ -142,6 +144,7 @@ class Client:
             char = '\\'
         
         fileName = 'fn\n' + filePath.split(char)[-1]
+        print(fileName)
         
         self.mainSocket.send(fileName.encode())
         
@@ -150,9 +153,9 @@ class Client:
         time.sleep(0.01)
 
         for item in segmentList:
-            self.mainSocket.send(item) 
-            print(item)
-    
+            self.mainSocket.send(item)
+
+        print('file sent')
         return filePath + ' uploaded'
 
     
@@ -193,14 +196,14 @@ class Client:
             
             segments.append(file.read(self.segmentLength))
             currentSegment += 1
-            
+        print('file encoded')
         return segments
     
 
     #decodes a segmentList from downloadFile() and saves it to fileName
     def decodeFile(self, segmentList, fileName):
         
-        print(segmentList)
+        print(f'segment list: {segmentList}')
     
         filePath = os.getcwd()
         
