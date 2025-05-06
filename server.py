@@ -270,6 +270,8 @@ class User:
     #sends frames to client starting at startFrame, and ending at endFrame
     def sendFrameLoop(self, startFrame, endFrame, videoName):
 
+        print(f'started frame loop for {videoName}')
+
         path = os.getcwd()
 
         if '/' in path:
@@ -279,21 +281,35 @@ class User:
         
         path = path + char + 'files' + char + videoName + char
 
-        FileServer.sendFile(path + 'info.txt', self._conn)
         info = open(path + 'info.txt')
 
-        fps = info.split('\n')[0].split(':')[1]
+        infoText = info.read()
+        info.close() 
+        
+        self._conn.send(infoText.encode())
 
+        fps = infoText.split('\n')[0].split(':')[1]
+        
         currentFrame = startFrame
         self.stopQueue = True
         while not self.stopQueue and currentFrame <= endFrame:
-            frame  = Frame(FileServer.getVideoFrame(currentFrame, path + '.mp4'), FileServer.getAudioFrame(currentFrame, path + '.mp3', fps), currentFrame)
+            frame  = Frame(
+                FileServer.getVideoFrame(currentFrame, path + videoName + '.mp4'), 
+                FileServer.getAudioFrame(currentFrame, path + videoName + '.mp3', fps), 
+                currentFrame
+            )
             FileServer.sendFrame(frame, self._conn)
+            print(f'frame {currentFrame} sent')
             currentFrame += 1
 
 
     #calls different functions based on what client sends
     def handleRequest(self, req, doPrint = True):
+
+        if '/' in os.getcwd():
+            char = '/'
+        else:
+            char = '\\'
 
         func = req.split('\n')[0]
         
@@ -303,9 +319,12 @@ class User:
             try:
                 endFrame = int(req.split('\n')[3])
             except IndexError:
-                endFrame = None
-            self.sendFrameLoop(self._conn, startFrame, endFrame, filePath)
-            return 'Started playing function at the {frame} frame'
+                p = os.getcwd() + char + 'files' + char + filePath + char + 'info.txt'
+                info = open(p, 'r')
+                endFrame = info.read().split('\n')[1].split(':')[1]
+                info.close()
+            self.sendFrameLoop(startFrame, endFrame, filePath)
+            return f'Started playing function at frame {startFrame}'
         
         if func == 'stp': #calls after the client wants server to stop sending the file
             self.stopQueue = True
@@ -324,6 +343,10 @@ class User:
         if func == 'quit': #closes the connection
             self._conn.close()
             return 'Connection Closed'
+        
+        if func == 'snd':
+            self._conn.send('snd received'.encode())
+            return 'Message Sent'
 
 
 
