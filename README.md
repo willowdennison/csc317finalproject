@@ -18,7 +18,7 @@ Features:
 6. Use playback buttons to control video playback
 7. Click X on the window to quit the application
 
-## To Upload:s
+## To Upload:
 1. Type the path on your machine to the video you'd like to upload
 2. Click Upload
 3. To check if this worked correctly, list the available videos and ensure your video appears

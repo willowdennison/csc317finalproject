@@ -17,12 +17,12 @@ class Client:
         
         self.segmentLength = 1024 
 
-        #ip = input('Enter host IP: ')
+        ip = input('Enter host IP: ')
 
         self.mainSocket = socket(AF_INET, SOCK_STREAM)
         print('Socket created')
 
-        self.mainSocket.connect(('192.168.0.100', self._port))
+        self.mainSocket.connect((ip, self._port))
         print('socket connected')
 
         self.recvThreadRunning = False
@@ -161,7 +161,7 @@ class Client:
         print('file sent')
         return filePath + ' uploaded'
 
-    def recv_exact(sock, size):
+    def recv_exact(self,sock, size):
         data = b""
         while len(data) < size:
             packet = sock.recv(size - len(data))
@@ -182,7 +182,7 @@ class Client:
             packed_size = self.mainSocket.recv(4)
             print('received')
             if not packed_size:
-                break
+               break
             frame_size = struct.unpack("I", packed_size)[0]
 
             frameObj = self.recv_exact(self.mainSocket, frame_size)
@@ -242,19 +242,13 @@ class Client:
         file.close()
     
     def pickleDecode(self):
-        list = []
         pickleObject = b''
         while True:
             data = self.mainSocket.recv(1024)
-            list.append(data)
+            pickleObject = pickleObject + data
             print(f'length of data: {len(data)}')
             if len(data) < 1024:
-                #print(data)
-                for item in list:
-                    #print(pickleObject)
-                    pickleObject = pickleObject + item
-
-                #print(pickleObject)
+                print(pickleObject)
                 return pickle.loads(pickleObject)
 
 

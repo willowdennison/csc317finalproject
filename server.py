@@ -8,6 +8,7 @@ from frame import Frame
 from moviepy import VideoFileClip
 import io
 import time
+import struct
 
 class FileServer:
 
@@ -44,12 +45,15 @@ class FileServer:
     #DOES NOT CHECK FOR FILE PATH MISSING for efficiency, will only be run if we know exactly where each frame is located b/c it will stop 
     #sending files if something goes wrong and crash the client and the thread
     def sendFrame(frame:Frame, conn):
+        #segmentList = FileServer.encodePickle(frame.dumpToPickle())
 
-        segmentList = FileServer.encodePickle(frame.dumpToPickle())
+        #for item in segmentList:
+            #conn.send(item)
+            
+        data = frame.dumpToPickle()
+        message_size = struct.pack('I', len(data))
+        conn.send(message_size + data)
 
-        for item in segmentList:
-            conn.send(item)
-    
     
     #sends a file, fileName, to the client, in max length 1024 byte segments
     def sendFile(fileName, conn):
