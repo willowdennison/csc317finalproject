@@ -10,13 +10,13 @@ class Client:
     
     
     def __init__(self):
-        self.gui = GUI.GUI(self)# needs to be moved below the connection logic, but after everything is debugged
+        #self.gui = GUI.GUI(self)# needs to be moved below the connection logic, but after everything is debugged
        
         self._port = 821
         
         self.segmentLength = 1024 
 
-        ip = input('Enter host IP')
+        ip = input('Enter host IP: ')
 
         self.mainSocket = socket(AF_INET, SOCK_STREAM)
         print('Socket created')
@@ -24,7 +24,7 @@ class Client:
         self.mainSocket.connect((ip, self._port))
         print('socket connected')
 
-        self.interface = GUI.MainWindow(self)
+        self.interface = GUI.GUI(self)
 
         self.recvThread = None
         

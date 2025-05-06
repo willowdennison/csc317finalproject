@@ -38,9 +38,9 @@ class GUI:
         uploadEntry = ttk.Entry(self.commandFrame, width = 20, textvariable = self.uploadPath)
         uploadEntry.grid(column = 0, columnspan = 2, row = 4, sticky = (W, E))
 
-        image1 = Image.open("sun.png")
-        test = ImageTk.PhotoImage(image1)
-        self.mainImage = tkinter.Label(image = test)
+        #image1 = Image.open("sun.png")
+        #test = ImageTk.PhotoImage(image1)
+        self.mainImage = tkinter.Label()#image = test)
         self.mainImage.grid(column = 0, columnspan = 4, row = 0, rowspan = 4, sticky = (N))
 
         ttk.Button(self.commandFrame, text = "<- 10s", command = self.goBackward).grid(column = 2, row = 5, sticky = E)
@@ -62,7 +62,7 @@ class GUI:
 
     #calls the client's function to start streaming a video
     def selectVideo(self):
-        self.client.selectVideo(self.videoName, 0)
+        self.client.selectVideo(self.videoName.get(), 0)
 
 
     #calls the client's function to pause current video
@@ -82,7 +82,7 @@ class GUI:
 
     #calls client function to upload a video from a given path
     def uploadVideo(self):
-        self.client.uploadFile(self.uploadPath)
+        self.client.uploadFile(self.uploadPath.get())
 
     #calls client function to stop the program, release RAM, etc
     def quit(self):
