@@ -23,6 +23,7 @@ class FileServer:
         connectThread = threading.Thread(Target = self.connect)
         connectThread.start()
 
+    #runs in a thread to constantly connect clients and creates the user thread
     def connect(self):
 
         while True:
@@ -32,6 +33,7 @@ class FileServer:
 
             self.createUserThread(conn)
 
+    #opens the file, if opens for writing, opens without checking if the path exists. Otherwise, if the file does not exist, raises FileNotFoundError
     def openFile(self, fileName, permissions):
 
         path  = os.getcwd()
@@ -88,7 +90,7 @@ class FileServer:
 
         return formattedDir
     
-
+    #receives a video in mulitple messages, runs decodeVideo with those messages in a list and then runs createMP3 with the file created from decodeVideo
     def receiveVideo(self, conn, fileName, doPrint = True):
         
         path  = os.getcwd()
@@ -115,7 +117,8 @@ class FileServer:
                 if doPrint:
                     (f'{fileName} received, creating mp3 file')
                 self.createMP3(fileName, directoryName)
-                
+    
+    #creates an mp3 file in the same folder as the given mp4 file
     def createMP3(self, fileName, directoryName, doPrint = True):
         videoPath = directoryName + fileName + '.mp4'
         audioPath = directoryName + fileName + '.mp3'
@@ -127,6 +130,7 @@ class FileServer:
         if doPrint:
             print("MP3 File created at: " + audioPath)
 
+    #gets a file ready for sending by splitting the message into multiple messages, returns a list of byte-wise strings
     def encodeFile(self, file):
         file.seek(0, os.SEEK_END)
 
@@ -144,6 +148,7 @@ class FileServer:
         
         return segments
     
+    #takes a segmentList, writes it into directoryPath as an mp4 file
     def decodeVideo(self, segmentList, fileName, directoryPath):
         filePath = directoryPath + fileName + '.mp4'
         file = self.openFile(filePath, 'wb')
@@ -153,5 +158,6 @@ class FileServer:
         
         file.close()
     
+    #calls user
     def createUserThread(self, conn):
-        User(conn)
+        user = User(conn)
