@@ -6,6 +6,8 @@ import pickle
 import wave
 from frame import Frame
 from moviepy import VideoFileClip
+import io
+import time
 
 class FileServer:
 
@@ -41,16 +43,16 @@ class FileServer:
         
     #DOES NOT CHECK FOR FILE PATH MISSING for efficiency, will only be run if we know exactly where each frame is located b/c it will stop 
     #sending files if something goes wrong and crash the client and the thread
-    def sendFrame(self, frame, conn):
+    def sendFrame(frame:Frame, conn):
 
-        segmentList = self.encodeFile(frame)
+        segmentList = FileServer.encodePickle(frame.dumpToPickle())
 
         for item in segmentList:
             conn.send(item)
     
     
     #sends a file, fileName, to the client, in max length 1024 byte segments
-    def sendFile(self, fileName, conn):
+    def sendFile(fileName, conn):
 
         path  = os.getcwd()
 
@@ -68,7 +70,7 @@ class FileServer:
             conn.send('Error 404: File not found'.encode())
             return
         
-        segmentList = self.encodeFile(file)
+        segmentList = FileServer.encodeFile(file)
         
         for item in segmentList:
             conn.send(item)
@@ -112,7 +114,7 @@ class FileServer:
                 try:
                     os.makedirs(directoryName + '(' + str(num) + ')', exist_ok = False)
                     dirMade = True
-                    fileName = fileName.split('.')[0] + '(' + str(num) + ')'
+                    fileName = fileName.split('.')[0] + '(' + str(num) + ')' + '.mp4'
                     directoryName = directoryName + '(' + str(num) + ')'
                     
                 except FileExistsError:
@@ -148,9 +150,10 @@ class FileServer:
     def createMP3(fileName, directoryName, doPrint = True):
         
         print('createMP3')
+        print(fileName)
         
         videoPath = directoryName + fileName + '.mp4'
-        audioPath = directoryName + fileName + '.mp3'
+        audioPath = directoryName + fileName + '.wav'
 
         video = VideoFileClip(videoPath)
 
@@ -163,27 +166,39 @@ class FileServer:
 
 
     #gets a file ready for sending by splitting the message into multiple messages, returns a list of byte-wise strings
-    def encodeFile(self, file):
+    def encodeFile(file):
+        
         file.seek(0, os.SEEK_END)
-
         fileLength = file.tell()
-
         file.seek(0)
 
-        nSegments = int(fileLength / self.segmentLength) + (fileLength % self.segmentLength > 0)
+        nSegments = int(fileLength / 1024) + (fileLength % 1024 > 0)
 
         segments = []
         
         for _ in range(nSegments):
 
-            segments.append(file.read(self.segmentLength))
+            segments.append(file.read(1024))
         
         return segments
     
     
+    def encodePickle(pkl):
+        
+        nSegments = int(len(pkl) / 1024) + (len(pkl) % 1024 > 0)
+        segments = []
+        
+        for _ in range(nSegments):
+            segments.append(io.BytesIO(pkl).read(1024))
+          
+        segments.append(b'')
+              
+        return segments
+        
+    
     #takes a segmentList, writes it into directoryPath as an mp4 file
     def decodeVideo(segmentList, fileName, directoryPath):
-        filePath = directoryPath + fileName + '.mp4'
+        filePath = directoryPath + fileName
         file = open(filePath, 'wb')
 
         for segment in segmentList:
@@ -235,10 +250,11 @@ class FileServer:
         wf = wave.open(audioPath, 'rb')
         frameRate = wf.getframerate()
 
-        chunk = frameRate / fps
+        chunk = frameRate / int(float(fps))
         start = frameInput * chunk
-        wf.setpos(start)
-        audioFrame = wf.readframes(chunk)
+        wf.setpos(int(start))
+        print(type(chunk))
+        audioFrame = wf.readframes(int(chunk))
     
         return(audioFrame)
         
@@ -291,13 +307,19 @@ class User:
         fps = infoText.split('\n')[0].split(':')[1]
         
         currentFrame = startFrame
-        self.stopQueue = True
-        while not self.stopQueue and currentFrame <= endFrame:
+        self.stopQueue = False
+        
+        print('starting to send frames')
+        
+        while not self.stopQueue and currentFrame <= int(endFrame):
+            cv2.imshow('', cv2.imdecode(FileServer.getVideoFrame(currentFrame, path + videoName + '.mp4'), cv2.IMREAD_COLOR))
             frame  = Frame(
                 FileServer.getVideoFrame(currentFrame, path + videoName + '.mp4'), 
-                FileServer.getAudioFrame(currentFrame, path + videoName + '.mp3', fps), 
+                FileServer.getAudioFrame(currentFrame, path + videoName + '.wav', fps), 
                 currentFrame
             )
+            print(f'frame {currentFrame} created')
+            
             FileServer.sendFrame(frame, self._conn)
             print(f'frame {currentFrame} sent')
             currentFrame += 1
