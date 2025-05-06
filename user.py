@@ -72,7 +72,7 @@ class User:
             return 'File Downloaded'
         
         if func == 'list':
-            conn.send(FileServer.listDir)
+            conn.send(FileServer.listDir().encode())
             return 'Directory Sent'
         
         if func == 'quit':
