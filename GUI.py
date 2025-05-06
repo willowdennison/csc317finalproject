@@ -62,27 +62,32 @@ class GUI:
 
     #calls the client's function to start streaming a video
     def selectVideo(self):
+        self.consoleLog("Trying to play " + self.videoName.get())
         self.client.selectVideo(self.videoName.get(), 0)
 
 
     #calls the client's function to pause current video
     def playPauseButton(self):
+        self.consoleLog("Tried to Play/Pause")
         self.client.playPause()
 
 
     #calls the client's function to move playback frame backwards by 10 seconds(frames*fps)
     def goBackward(self):
+        self.consoleLog("Tried backward 10")
         self.client.goToVideo(self.client.getCurrentTimestamp() - 10)
 
 
     #calls the client's function to move playback frame forwards by 10 seconds(frames*fps)
     def goForward(self):
+        self.consoleLog("Tried forward 10")
         self.client.goToVideo(self.client.getCurrentTimestamp() + 10)
 
 
     #calls client function to upload a video from a given path
     def uploadVideo(self):
-        self.client.uploadFile(self.uploadPath.get())
+        self.consoleLog(self.client.uploadFile(self.uploadPath.get()))
+
 
     #calls client function to stop the program, release RAM, etc
     def quit(self):
