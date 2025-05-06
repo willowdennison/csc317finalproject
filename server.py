@@ -1,10 +1,10 @@
 from socket import *
 import threading
 import os
-import subprocess
 import cv2
 import pickle
 from frame import Frame
+from moviepy import VideoFileClip
 
 class FileServer:
 
@@ -150,9 +150,9 @@ class FileServer:
         videoPath = directoryName + fileName + '.mp4'
         audioPath = directoryName + fileName + '.mp3'
 
-        command = f"ffmpeg -i {videoPath} -vn -ar 44100 -ac 1 -b:a 192k {audioPath}"
+        video = VideoFileClip(videoPath)
 
-        subprocess.call(command, shell=True)
+        video.audio.write_audiofile(audioPath)
         
         if doPrint:
             print("MP3 File created at: " + audioPath)
