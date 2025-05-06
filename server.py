@@ -205,9 +205,9 @@ class FileServer:
         info = open(dirName + 'info.txt', 'w')
         
 
-        fps = video.fps()
-        duration = video.duration()
-        count = duration * fps
+        fps = video.fps
+        duration = video.duration
+        count = round(duration * fps)
         
         info.write(f'fps:{fps}\nframes:{count}')
         info.close()
@@ -271,7 +271,11 @@ class User:
         currentFrame = startFrame
         self.stopQueue = True
         while not self.stopQueue and currentFrame <= endFrame:
-            frame  = Frame(FileServer.getVideoFrame(currentFrame, path + '.mp4'), FileServer.getAudioFrame(currentFrame, path + '.mp3'), currentFrame)
+            frame  = Frame(
+                FileServer.getVideoFrame(currentFrame, path + '.mp4'), 
+                FileServer.getAudioFrame(currentFrame, path + '.mp3'), currentFrame
+            )
+            
             FileServer.sendFrame(frame, self._conn)
             currentFrame += 1
 
