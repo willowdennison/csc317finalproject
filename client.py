@@ -5,6 +5,7 @@ import time
 import os 
 from videoStream import VideoStream
 import pickle
+import struct
 
 
 class Client:
@@ -160,7 +161,15 @@ class Client:
         print('file sent')
         return filePath + ' uploaded'
 
-    
+    def recv_exact(sock, size):
+        data = b""
+        while len(data) < size:
+            packet = sock.recv(size - len(data))
+            if not packet:
+                return None
+            data += packet
+        return data
+
     # Receives video frames from the server and inserts them into the the video stream for playback.
     #Stops receiving frames if the video chnages or no data is changed. 
     def receive(self):
@@ -169,8 +178,13 @@ class Client:
         
         while self.recvThreadRunning:
             print('receiving')
-            frameObj = self.pickleDecode(self.mainSocket)
+            packed_size = self.mainSocket.recv(4)
             print('received')
+            if not packed_size:
+                break
+            frame_size = struct.unpack("I", packed_size)[0]
+
+            frameObj = self.recv_exact(self.mainSocket, frame_size)
             
             if not frameObj:
                break
@@ -234,12 +248,12 @@ class Client:
             list.append(data)
             print(f'length of data: {len(data)}')
             if len(data) < 1024:
-
+                #print(data)
                 for item in list:
-
+                    #print(pickleObject)
                     pickleObject = pickleObject + item
 
-                print(pickleObject)
+                #print(pickleObject)
                 return pickle.loads(pickleObject)
 
 
