@@ -154,4 +154,4 @@ class FileServer:
         file.close()
     
     def createUserThread(self, conn):
-        user = user.User(conn)
+        user = User(conn)
