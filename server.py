@@ -312,13 +312,18 @@ class User:
         print('starting to send frames')
         
         while not self.stopQueue and currentFrame <= int(endFrame):
-            cv2.imshow('', cv2.imdecode(FileServer.getVideoFrame(currentFrame, path + videoName + '.mp4'), cv2.IMREAD_COLOR))
             frame  = Frame(
                 FileServer.getVideoFrame(currentFrame, path + videoName + '.mp4'), 
                 FileServer.getAudioFrame(currentFrame, path + videoName + '.wav', fps), 
                 currentFrame
             )
             print(f'frame {currentFrame} created')
+            
+            #image display
+            # x = cv2.imdecode(frame.img, cv2.IMREAD_COLOR)
+            # cv2.imshow('dfs', x)
+            # if cv2.waitKey(1) & 0xFF == ord('q'):
+            #     break
             
             FileServer.sendFrame(frame, self._conn)
             print(f'frame {currentFrame} sent')
