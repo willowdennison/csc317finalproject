@@ -17,12 +17,12 @@ class Client:
         
         self.segmentLength = 1024 
 
-        ip = input('Enter host IP: ')
+        #ip = input('Enter host IP: ')
 
         self.mainSocket = socket(AF_INET, SOCK_STREAM)
         print('Socket created')
 
-        self.mainSocket.connect((ip, self._port))
+        self.mainSocket.connect(('192.168.0.100', self._port))
         print('socket connected')
 
         self.recvThreadRunning = False
@@ -35,7 +35,6 @@ class Client:
 
         recvThread = threading.Thread(target = self.receive)
         recvThread.start()
-
         self.interface = GUI.GUI(self)
 
 
@@ -64,13 +63,13 @@ class Client:
         
         self.mainSocket.send(msg.encode())
 
-        print('waiting to receive info')
+        #print('waiting to receive info')
 
         info = self.mainSocket.recv(1024).decode()
         info = info.split('\n')
-        print(f'info: {info}')
-        fps = info[0].split(':')[1]
-        numFrames = info[1].split(':')[1]
+        #print(f'info: {info}')
+        numFrames = info[0].split(':')[1]
+        fps = info[1].split(':')[1]
         
         self.currentVideo = videoName
         self.recvThreadRunning = True
@@ -177,16 +176,18 @@ class Client:
         originalVideo = self.currentVideo
         
         while self.recvThreadRunning:
-            print('receiving')
+            #print('receiving')
             #frameObj = self.pickleDecode()
             packed_size = self.mainSocket.recv(4)
-            print('received')
+            #print('received')
             if not packed_size:
                break
             frame_size = struct.unpack("I", packed_size)[0]
 
-            frameObj = self.recv_exact(self.mainSocket, frame_size)
+            frame = self.recv_exact(self.mainSocket, frame_size)
             
+            frameObj = pickle.loads(frame)
+
             if not frameObj:
                break
 
