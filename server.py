@@ -235,7 +235,6 @@ class FileServer:
 
         cap.set(cv2.CAP_PROP_POS_FRAMES, frameInput-1)
         _, frame = cap.read()
-        frame = cv2.resize(frame, (640, 480))
 
         _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
         
