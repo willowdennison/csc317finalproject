@@ -71,15 +71,15 @@ class VideoStream:
                 #self.audioStream.stop_stream()
                     
     
-    #checks if the frame 1 minute ahead of current position is available
+    #checks if the frame 5 seconds ahead of current position is available
     #if its available sets buffer to False, if not sets it to True
     def checkBuffer(self):
         checkFrame = self.frameRate * 5
             
         if self.frameQueue.qsize() <= checkFrame:
-            self.buffer = True
-        elif self.frameQueue.qsize() <= checkFrame * 3:
             self.buffer = False
+        elif self.frameQueue.qsize() >= checkFrame * 3:
+            self.buffer = True
             
     
     #takes a frame and adds it to the frame list at the index of its frameNum
