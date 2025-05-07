@@ -1,6 +1,9 @@
 import pickle
 
+
+
 class Frame:
+    
     
     #takes an image from cv2.imread encoded in bytes, a pydub.AudioSegment encoded in bytes, and a frame number
     #stores them in a Frame object to be dumped to a pickle file

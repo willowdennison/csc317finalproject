@@ -8,6 +8,7 @@ import pickle
 import struct
 
 
+
 class Client:
     
     
@@ -33,6 +34,7 @@ class Client:
 
         recvThread = threading.Thread(target = self.receive)
         recvThread.start()
+
         self.interface = GUI.GUI(self)
 
 
@@ -49,7 +51,7 @@ class Client:
 
 
     #Sends request to server to start sending frame objects from vidoeName
-    def selectVideo(self, videoName, startFrame , endFrame=None):
+    def selectVideo(self, videoName, startFrame , endFrame = None):
         
         self.recvThreadRunning = False 
 
@@ -76,7 +78,7 @@ class Client:
         self.videoStream = VideoStream(fps, startFrame)
             
         
-        recvThread = threading.Thread(target=self.receive)
+        recvThread = threading.Thread(target = self.receive)
         
         recvThread.start()
 
@@ -112,9 +114,8 @@ class Client:
         
         
     #goes to a specific timestamp  in the video stream
-    def goToVideo(self, frameNum ):
+    def goToVideo(self, frameNum):
        
-        
         self.mainSocket.send(f'select\n{self.currentVideo}\n{frameNum}'.encode())
 
         self.selectVideo(self.currentVideo, frameNum)
@@ -158,7 +159,7 @@ class Client:
     #receive exactly size  bytes from socket.
     def recv_exact(self,sock, size):
        
-        data = b""
+        data = b''
         
         while len(data) < size:
             packet = sock.recv(size - len(data))
@@ -170,6 +171,7 @@ class Client:
         
         return data
 
+
     # Receives video frames from the server and inserts them into the the video stream for playback.
     #Stops receiving frames if the video chnages or no data is changed. 
     def receive(self):
@@ -177,14 +179,14 @@ class Client:
         originalVideo = self.currentVideo
         
         while self.recvThreadRunning:
-            packed_size = self.mainSocket.recv(4)
+            packedSize = self.mainSocket.recv(4)
             
-            if not packed_size:
+            if not packedSize:
                break
            
-            frame_size = struct.unpack("I", packed_size)[0]
+            frameSize = struct.unpack('I', packedSize)[0]
 
-            frame = self.recv_exact(self.mainSocket, frame_size)
+            frame = self.recv_exact(self.mainSocket, frameSize)
             
             frameObj = pickle.loads(frame)
 
@@ -221,48 +223,6 @@ class Client:
         print('file encoded')
        
         return segments
-    
-
-    #decodes a segmentList from downloadFile() and saves it to fileName
-    def decodeFile(self, segmentList, fileName):
-        
-        print(f'segment list: {segmentList}')
-    
-        filePath = os.getcwd()
-        
-        #check for file separator character and use the proper one
-        if '\\' in filePath:
-            char = '\\'
-        else:
-            char = '/'
-        
-        filePath = filePath + char + 'files' + char + fileName
-
-        file = open(filePath, 'wb')
-        
-        for segment in segmentList:
-            file.write(segment)
-            
-        file.close()
-
-    
-    def pickleDecode(self):
-       
-        pickleObject = b''
-       
-        while True:
-            
-            data = self.mainSocket.recv(1024)
-            
-            pickleObject = pickleObject + data
-            
-            print(f'length of data: {len(data)}')
-            
-            if len(data) < 1024:
-                print(pickleObject)
-               
-                return pickle.loads(pickleObject)
-
 
 
 if __name__ == '__main__':

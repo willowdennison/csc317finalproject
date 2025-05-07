@@ -6,7 +6,6 @@ import pickle
 import wave
 from frame import Frame
 from moviepy import VideoFileClip
-import io
 import struct
 
 
@@ -50,31 +49,6 @@ class FileServer:
         data = frame.dumpToPickle()
         message_size = struct.pack('I', len(data))
         conn.send(message_size + data)
-
-    
-    #sends a file, fileName, to the client, in max length 1024 byte segments
-    def sendFile(fileName, conn):
-
-        path  = os.getcwd()
-
-        if '/' in path:
-            char = '/'
-        else:
-            char = '\\'
-
-        path = path + char + 'files' + char + fileName
-
-        try:
-            file = open(fileName, 'rb')
-        
-        except FileNotFoundError:
-            conn.send('Error 404: File not found'.encode())
-            return
-        
-        segmentList = FileServer.encodeFile(file)
-        
-        for item in segmentList:
-            conn.send(item)
     
     
     #gives a list of the names of the files/directories in the folder
@@ -149,7 +123,7 @@ class FileServer:
                 return
     
     
-    #creates an mp3 file in the same folder as the given mp4 file
+    #creates an mp3 file in the same folder as the given mp4 file, also calls createInfo
     def createMP3(fileName, directoryName, doPrint = True):
         
         videoPath = directoryName + fileName + '.mp4'
@@ -162,40 +136,8 @@ class FileServer:
         FileServer.createInfo(video, directoryName)
         
         if doPrint:
-            print("MP3 File created at: " + audioPath)
+            print('MP3 File created at: ' + audioPath)
 
-
-    #gets a file ready for sending by splitting the message into multiple messages, returns a list of byte-wise strings
-    def encodeFile(file):
-        
-        file.seek(0, os.SEEK_END)
-        fileLength = file.tell()
-        file.seek(0)
-
-        nSegments = int(fileLength / 1024) + (fileLength % 1024 > 0)
-
-        segments = []
-        
-        for _ in range(nSegments):
-
-            segments.append(file.read(1024))
-        
-        return segments
-    
-    
-    #takes a pickle (or any bytes object) and dumps it to a list to be sent over a socket
-    def encodePickle(pkl):
-        
-        nSegments = int(len(pkl) / 1024) + (len(pkl) % 1024 > 0)
-        segments = []
-        
-        for _ in range(nSegments):
-            segments.append(io.BytesIO(pkl).read(1024))
-          
-        segments.append(b'')
-              
-        return segments
-        
     
     #takes a segmentList, writes it into directoryPath as an mp4 file
     def decodeVideo(segmentList, fileName, directoryPath):
@@ -220,7 +162,6 @@ class FileServer:
 
         info = open(dirName + 'info.txt', 'w')
         
-
         fps = video.fps
         duration = video.duration
         count = round(duration * fps)
@@ -229,6 +170,7 @@ class FileServer:
         info.close()
 
 
+    #returns the video frame requested
     def getVideoFrame(frameInput, videoPath):
 
         cap = cv2.VideoCapture(videoPath)
@@ -243,7 +185,7 @@ class FileServer:
         return data
     
     
-    #gets the audio frames that play during the video frame requested
+    #returns the audio frames that play during the video frame requested
     def getAudioFrame(frameInput, audioPath, fps):
         
         wf = wave.open(audioPath, 'rb')
@@ -257,10 +199,8 @@ class FileServer:
         return(audioFrame)
         
    
-        
-class User:
 
-    
+class User:
     def __init__(self, conn):
         self._conn = conn
         
@@ -333,15 +273,21 @@ class User:
         func = req.split('\n')[0]
         
         if func == 'select': #calls after the client wants to send the file starting at the var 'frame' frame
+            
             filePath = req.split('\n')[1]
             startFrame = int(req.split('\n')[2])
+            
             try:
+                
                 endFrame = int(req.split('\n')[3])
+                
             except IndexError:
+                
                 p = os.getcwd() + char + 'files' + char + filePath + char + 'info.txt'
                 info = open(p, 'r')
                 endFrame = info.read().split('\n')[1].split(':')[1]
                 info.close()
+            
             self.sendFrameLoop(startFrame, endFrame, filePath)
             return f'Started playing function at frame {startFrame}'
         
@@ -351,7 +297,6 @@ class User:
         
         if func == 'fn': #receives video from client
             fileName = req.split('\n')[1]
-            print(fileName)
             FileServer.receiveVideo(self._conn, fileName, doPrint)
             return 'File Downloaded'
         
@@ -366,7 +311,6 @@ class User:
         if func == 'snd':
             self._conn.send('snd received'.encode())
             return 'Message Sent'
-
 
 
 if __name__ == '__main__':
