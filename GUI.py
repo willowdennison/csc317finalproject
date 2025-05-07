@@ -39,9 +39,7 @@ class GUI:
         uploadEntry = ttk.Entry(self.commandFrame, width = 20, textvariable = self.uploadPath)
         uploadEntry.grid(column = 0, columnspan = 2, row = 4, sticky = (W, E))
 
-        #image1 = Image.open("sun.png")
-        #test = ImageTk.PhotoImage(image1)
-        self.mainImage = tkinter.Label()#image = test)
+        self.mainImage = tkinter.Label()
         self.mainImage.grid(column = 0, columnspan = 4, row = 0, rowspan = 4, sticky = (N))
 
         ttk.Button(self.commandFrame, text = "<- 10s", command = self.goBackward).grid(column = 2, row = 5, sticky = E)
@@ -52,7 +50,7 @@ class GUI:
         self.consoleLabel = ttk.Label(self.commandFrame, text = "console square", font = ("Consolas",10), background = 'Gray')
         self.consoleLabel.grid(column = 6, columnspan = 4, row = 1, rowspan = 4, sticky = (S))
 
-        #mainloop is an internal while loop provided by tkinter
+        #mainloop is an internal while loop handled by tkinter
         target = root.mainloop()
 
 
@@ -76,13 +74,13 @@ class GUI:
     #calls the client's function to move playback frame backwards by 10 seconds(frames*fps)
     def goBackward(self):
         self.consoleLog("Tried backward 10")
-        self.client.goToVideo(self.client.getCurrentTimestamp() - 10)
+        self.client.goToVideo(self.client.videoStream.position - 10 * self.client.videoStream.frameRate)
 
 
     #calls the client's function to move playback frame forwards by 10 seconds(frames*fps)
     def goForward(self):
         self.consoleLog("Tried forward 10")
-        self.client.goToVideo(self.client.getCurrentTimestamp() + 10)
+        self.client.goToVideo(self.client.videoStream.position + 10 * self.client.videoStream.frameRate)
 
 
     #calls client function to upload a video from a given path
