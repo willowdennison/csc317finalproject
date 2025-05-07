@@ -42,9 +42,9 @@ class GUI:
         self.mainImage = tkinter.Label()
         self.mainImage.grid(column = 0, columnspan = 4, row = 0, rowspan = 4, sticky = (N))
 
-        ttk.Button(self.commandFrame, text = "<- 10s", command = self.goBackward).grid(column = 2, row = 5, sticky = E)
+        #ttk.Button(self.commandFrame, text = "<- 10s", command = self.goBackward).grid(column = 2, row = 5, sticky = E)
         ttk.Button(self.commandFrame, text = "\u23f5/\u23f8", command = self.playPauseButton).grid(column = 3, row = 5)
-        ttk.Button(self.commandFrame, text = "10s ->", command = self.goForward).grid(column = 4, row = 5, sticky = W)
+        #ttk.Button(self.commandFrame, text = "10s ->", command = self.goForward).grid(column = 4, row = 5, sticky = W)
 
 
         self.consoleLabel = ttk.Label(self.commandFrame, text = "console square", font = ("Consolas",10), background = 'Gray')

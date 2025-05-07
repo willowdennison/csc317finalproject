@@ -45,9 +45,7 @@ class VideoStream:
         lastFrameTime = time.time()
         
         while self.runThread:
-            
-            #self.checkBuffer()
-            
+                        
             if self.playVideo:
                 
                 #wait the appropriate time between frames
@@ -78,6 +76,7 @@ class VideoStream:
 
         if self.frameQueue.qsize() <= checkFrame:
             self.buffer = True
+            print("buffering...")
         elif self.frameQueue.qsize() >= checkFrame * 3:
             self.buffer = False
 
