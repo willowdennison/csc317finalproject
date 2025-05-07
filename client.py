@@ -12,7 +12,6 @@ class Client:
     
     
     def __init__(self):
-        self.interface = GUI.GUI(self)
 
         self._port = 821
         
@@ -36,7 +35,7 @@ class Client:
 
         recvThread = threading.Thread(target = self.receive)
         recvThread.start()
-#        self.interface = GUI.GUI(self)
+        self.interface = GUI.GUI(self)
 
 
     # sends a list command to the server and receives a list of available videos,recieves the list of vidoes and returns it as a strign 
@@ -74,10 +73,8 @@ class Client:
         
         self.currentVideo = videoName
         self.recvThreadRunning = True
-        self.videoStream = VideoStream(fps)
+        self.videoStream = VideoStream(fps, startFrame)
             
-        if startFrame > 0 or endFrame:
-            self.videoStream.goTo(startFrame, endFrame)
         
         recvThread = threading.Thread(target=self.receive)
         recvThread.start()
@@ -109,19 +106,14 @@ class Client:
     #gets the current time stamp in the video stream.
     def getCurrentTimeStamp(self):
        
-        timeStamp = time.time()
-       
-        print('Current time stamp:', timeStamp)
-        
-        return timeStamp
+        return self.videoStream.getTimeStamp()
         
         
     #goes to a specific timestamp  in the video stream
-    def goToVideo(self, timeStamp , frameRate):
+    def goToVideo(self, frameNum ):
        
-        frameNum = int(timeStamp * frameRate) # time stamp is in seconds
-
         
+        self.mainSocket.send(f'select\n{self.currentVideo}\n{frameNum}'.encode())
 
         self.selectVideo(self.currentVideo, frameNum)
 

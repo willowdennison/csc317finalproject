@@ -1,6 +1,7 @@
 # Video Streaming Site
 
 Features:
+- Fully supported on **windows**
 - Multiple video support
 - Multiple simultaneous user support
 - Upload function

@@ -11,8 +11,9 @@ class VideoStream:
     
     #takes the total number of frames in the video, the framerate in frames per second,
     #and the gui object to play video on
-    def __init__(self, fps:int):
+    def __init__(self, fps:int, position):
         self.frameRate = int(float(fps))
+        self.position = position
         
         #current start and end frame being requested, none meaning end frame
         self.currentRequest = (0, None)
@@ -89,6 +90,8 @@ class VideoStream:
             frame=cv2.imdecode(img, cv2.IMREAD_COLOR)
             cv2.imshow("WORK PLEASE", frame)
 
+            self.position += 1
+
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 return True
             
@@ -112,3 +115,7 @@ class VideoStream:
         self.frameQueue = Queue()
         
         self.currentRequest = (frameNum, endFrame)
+        self.position = frameNum
+    
+    def getTimeStamp(self):
+        return self.position / self.frameRate
