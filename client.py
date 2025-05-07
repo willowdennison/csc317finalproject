@@ -167,7 +167,7 @@ class Client:
         data = b""
         
         while len(data) < size:
-           packet = sock.recv(size - len(data))
+            packet = sock.recv(size - len(data))
            
             if not packet:
                return None
@@ -183,7 +183,7 @@ class Client:
         originalVideo = self.currentVideo
         
         while self.recvThreadRunning:
-           packed_size = self.mainSocket.recv(4)
+            packed_size = self.mainSocket.recv(4)
             
             if not packed_size:
                break
