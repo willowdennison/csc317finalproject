@@ -18,8 +18,6 @@ class Client:
         
         self.segmentLength = 1024 
 
-        #ip = input('Enter host IP: ')
-
         self.mainSocket = socket(AF_INET, SOCK_STREAM)
         print('Socket created')
 
@@ -36,7 +34,6 @@ class Client:
 
         recvThread = threading.Thread(target = self.receive)
         recvThread.start()
-#        self.interface = GUI.GUI(self)
 
 
     # sends a list command to the server and receives a list of available videos,recieves the list of vidoes and returns it as a strign 
@@ -59,40 +56,46 @@ class Client:
         time.sleep(0.01)
 
         msg = f'select\n{videoName}\n{startFrame}'
+        
         if endFrame is not None:
-              msg += f'\n{endFrame}'
+            msg += f'\n{endFrame}'
         
         self.mainSocket.send(msg.encode())
 
-        #print('waiting to receive info')
-
         info = self.mainSocket.recv(1024).decode()
+       
         info = info.split('\n')
-        #print(f'info: {info}')
+        
         fps = info[0].split(':')[1]
+        
         numFrames = info[1].split(':')[1]
         
         self.currentVideo = videoName
+        
         self.recvThreadRunning = True
+        
         self.videoStream = VideoStream(fps)
             
         if startFrame > 0 or endFrame:
-            self.videoStream.goTo(startFrame, endFrame)
+           self.videoStream.goTo(startFrame, endFrame)
         
         recvThread = threading.Thread(target=self.receive)
+        
         recvThread.start()
-
 
 
     # plays and pauses the video stream
     def playPause(self):
 
         if self.playbackEnabled:
+           
             self.videoStream.pause()
+            
             self.playbackEnabled = False
             
         else:
             self.videoStream.play()
+            
             self.playbackEnabled = True
 
 
@@ -114,14 +117,12 @@ class Client:
         print('Current time stamp:', timeStamp)
         
         return timeStamp
-        
-        
+
+    
     #goes to a specific timestamp  in the video stream
     def goToVideo(self, timeStamp , frameRate):
        
         frameNum = int(timeStamp * frameRate) # time stamp is in seconds
-
-        
 
         self.selectVideo(self.currentVideo, frameNum)
 
@@ -158,15 +159,24 @@ class Client:
             self.mainSocket.send(item)
 
         print('file sent')
+        
         return filePath + ' uploaded'
 
+   
     def recv_exact(self,sock, size):
+       
         data = b""
+        
         while len(data) < size:
+           
             packet = sock.recv(size - len(data))
+           
             if not packet:
+               
                 return None
+            
             data += packet
+        
         return data
 
     # Receives video frames from the server and inserts them into the the video stream for playback.
@@ -176,12 +186,12 @@ class Client:
         originalVideo = self.currentVideo
         
         while self.recvThreadRunning:
-            #print('receiving')
-            #frameObj = self.pickleDecode()
+           
             packed_size = self.mainSocket.recv(4)
-            #print('received')
+            
             if not packed_size:
                break
+           
             frame_size = struct.unpack("I", packed_size)[0]
 
             frame = self.recv_exact(self.mainSocket, frame_size)
@@ -203,6 +213,7 @@ class Client:
     def encodeFile(self, file):
         
         file.seek(0, os.SEEK_END)
+        
         fileLength = file.tell()
         
         file.seek(0)
@@ -210,13 +221,16 @@ class Client:
         nSegments = int(fileLength / self.segmentLength) + (fileLength % self.segmentLength > 0)
         
         segments = []
+        
         currentSegment = 0
         
         while currentSegment <= nSegments:
             
             segments.append(file.read(self.segmentLength))
             currentSegment += 1
+       
         print('file encoded')
+       
         return segments
     
 
@@ -243,13 +257,20 @@ class Client:
         file.close()
     
     def pickleDecode(self):
+       
         pickleObject = b''
+       
         while True:
+            
             data = self.mainSocket.recv(1024)
+            
             pickleObject = pickleObject + data
+            
             print(f'length of data: {len(data)}')
+            
             if len(data) < 1024:
                 print(pickleObject)
+               
                 return pickle.loads(pickleObject)
 
 
