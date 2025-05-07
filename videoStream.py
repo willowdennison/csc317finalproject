@@ -1,10 +1,9 @@
 from threading import Thread
 import time
 from frame import Frame
-import GUI
 import pyaudio
 import cv2
-import queue
+from queue import Queue
 
 
 class VideoStream:
@@ -12,7 +11,7 @@ class VideoStream:
     
     #takes the total number of frames in the video, the framerate in frames per second,
     #and the gui object to play video on
-    def __init__(self, numFrames:int, fps:int):
+    def __init__(self, fps:int):
         
         self.frameRate = int(float(fps))
         self.position = 0
@@ -21,7 +20,7 @@ class VideoStream:
         self.currentRequest = (0, None)
         
         #array for frame images
-        self.frames = [None] * int(float(numFrames))
+        self.frameQueue = Queue()
 
         p = pyaudio.PyAudio()
         self.audioStream = p.open(format=p.get_format_from_width(2), channels=2,rate=44100,output=True,frames_per_buffer=(round(44100/int(float(fps)))),start = False)
@@ -35,7 +34,7 @@ class VideoStream:
         
         self.playLoop = Thread(target = self.playLoopThread)
         self.playLoop.start()
-        self.audioQueue=queue.Queue()
+        self.audioQueue = Queue()
         
     
     #run loop to play frames to gui, check if it should be playing or buffering
@@ -60,13 +59,12 @@ class VideoStream:
                     lastFrameTime = time.time()
                     self.position += 1
                     
-                    kill = self.render(self.frames[self.position])
+                    killLoop = self.render()
 
-                    if kill:
-                        #KILL THE STREAM HERE
+                    if killLoop:
+                        #END THE STREAM HERE
                         break
                     
-                    self.cleanBuffer()
                     
             else:
                 pass
@@ -76,46 +74,27 @@ class VideoStream:
     #checks if the frame 1 minute ahead of current position is available
     #if its available sets buffer to False, if not sets it to True
     def checkBuffer(self):
-        
-        framesRemaining = len(self.frames) - self.position
-        
-        if framesRemaining < self.frameRate:
-            checkFrame = framesRemaining
-        else:
-            checkFrame = self.frameRate
+        checkFrame = self.frameRate * 5
             
-        if self.frames[self.position] is not None and self.frames[checkFrame + self.position] is not None:
-            self.buffer = False
-        elif self.frames[self.position + (checkFrame * 5)]:
+        if self.frameQueue.qsize() <= checkFrame:
             self.buffer = True
-    
-    
-    #removes frames more than 1 minute earlier than the current position
-    def cleanBuffer(self):
-        
-        #if 1 minute has passed, remove frame 1 minute ago
-        if self.position >= (60 * self.frameRate):
-            self.frames[self.position - (60 * self.frameRate)] = None
+        elif self.frameQueue.qsize() <= checkFrame * 3:
+            self.buffer = False
             
     
     #takes a frame and adds it to the frame list at the index of its frameNum
     def insertFrame(self, frame:Frame):
         self.audioQueue.put(frame.audio)
-        #if self.audioStream.is_active():
-         #   while not self.audioQueue.empty():
-         #       self.audioStream.write(self.audioQueue.get())
-        self.frames[frame.frameNum] = frame.img
+        self.frameQueue.put(frame.img)
          
     
     #renders frame image and audio to self.gui
-    def render(self, img:bytes):
-        
+    def render(self):
         if self.audioStream.is_active():
-            #while not self.audioQueue.empty() and not self.buffer:
             self.audioStream.write(self.audioQueue.get())
         
-        #self.gui.showImage(img)
-        #print("render")
+        img = self.frameQueue.get()
+        
         frame=cv2.imdecode(img, cv2.IMREAD_COLOR)
         cv2.imshow("WORK PLEASE", frame)
 
@@ -136,5 +115,9 @@ class VideoStream:
     
     #sets self.position to frameNum and starts playing from there
     def goTo(self, frameNum:int, endFrame:int = None):
+        
+        self.audioQueue = Queue()
+        self.frameQueue = Queue()
+        
         self.currentRequest = (frameNum, endFrame)
         self.position = frameNum

@@ -73,7 +73,7 @@ class Client:
         
         self.currentVideo = videoName
         self.recvThreadRunning = True
-        self.videoStream = VideoStream(fps, numFrames)
+        self.videoStream = VideoStream(fps)
             
         if startFrame > 0 or endFrame:
             self.videoStream.goTo(startFrame, endFrame)
@@ -117,17 +117,14 @@ class Client:
     def goToVideo(self, timeStamp , frameRate):
        
         frameNum = int(timeStamp * frameRate) # time stamp is in seconds
+
         
-        if self.videoStream.frames[frameNum] is not None:
-         
-         self.videoStream.goTo(frameNum)
 
-        else:
-            self.selectVideo(self.currentVideo, frameNum)
+        self.selectVideo(self.currentVideo, frameNum)
 
-            self.videoStream.goTo(frameNum)
+        self.videoStream.goTo(frameNum)
            
-            self.playbackEnabled = True
+        self.playbackEnabled = True
 
 
     #Sends file path and file contents, gets filename from file path and adds header flag
