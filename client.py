@@ -37,7 +37,7 @@ class Client:
 
 
     # sends a list command to the server and receives a list of available videos,recieves the list of vidoes and returns it as a strign 
-    def listVideo (self):
+    def listVideo(self):
         
          self.mainSocket.send('list\n'.encode())
 
@@ -92,7 +92,6 @@ class Client:
             self.videoStream.pause()
             
             self.playbackEnabled = False
-            
         else:
             self.videoStream.play()
             
@@ -140,7 +139,6 @@ class Client:
         else:
             raise FileNotFoundError
         
-        
         if '/' in filePath:
             char = '/'
         else: 
@@ -162,18 +160,17 @@ class Client:
         
         return filePath + ' uploaded'
 
-   
+
+    #receive exactly size  bytes from socket.
     def recv_exact(self,sock, size):
        
         data = b""
         
         while len(data) < size:
-           
-            packet = sock.recv(size - len(data))
+           packet = sock.recv(size - len(data))
            
             if not packet:
-               
-                return None
+               return None
             
             data += packet
         
@@ -186,8 +183,7 @@ class Client:
         originalVideo = self.currentVideo
         
         while self.recvThreadRunning:
-           
-            packed_size = self.mainSocket.recv(4)
+           packed_size = self.mainSocket.recv(4)
             
             if not packed_size:
                break
@@ -225,7 +221,6 @@ class Client:
         currentSegment = 0
         
         while currentSegment <= nSegments:
-            
             segments.append(file.read(self.segmentLength))
             currentSegment += 1
        
@@ -255,6 +250,7 @@ class Client:
             file.write(segment)
             
         file.close()
+
     
     def pickleDecode(self):
        
