@@ -12,7 +12,8 @@ class Client:
     
     
     def __init__(self):
-       
+        self.interface = GUI.GUI(self)
+
         self._port = 821
         
         self.segmentLength = 1024 
@@ -35,7 +36,7 @@ class Client:
 
         recvThread = threading.Thread(target = self.receive)
         recvThread.start()
-        self.interface = GUI.GUI(self)
+#        self.interface = GUI.GUI(self)
 
 
     # sends a list command to the server and receives a list of available videos,recieves the list of vidoes and returns it as a strign 
