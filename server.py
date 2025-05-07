@@ -7,7 +7,6 @@ import wave
 from frame import Frame
 from moviepy import VideoFileClip
 import io
-import time
 import struct
 
 class FileServer:
@@ -210,7 +209,7 @@ class FileServer:
         
         file.close()
         
-        print('end decodeVideo')
+        #print('end decodeVideo')
     
     
     #calls user
@@ -237,7 +236,7 @@ class FileServer:
 
         cap = cv2.VideoCapture(videoPath)
 
-        print(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        #print(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
         cap.set(cv2.CAP_PROP_POS_FRAMES, frameInput-1)
         ret, frame = cap.read()
@@ -257,7 +256,6 @@ class FileServer:
         chunk = frameRate / int(float(fps))
         start = frameInput * chunk
         wf.setpos(int(start))
-        print(type(chunk))
         audioFrame = wf.readframes(int(chunk))
     
         return(audioFrame)
@@ -290,7 +288,7 @@ class User:
     #sends frames to client starting at startFrame, and ending at endFrame
     def sendFrameLoop(self, startFrame, endFrame, videoName):
 
-        print(f'started frame loop for {videoName}')
+        #print(f'started frame loop for {videoName}')
 
         path = os.getcwd()
 
@@ -313,7 +311,7 @@ class User:
         currentFrame = startFrame
         self.stopQueue = False
         
-        print('starting to send frames')
+        #print('starting to send frames')
         
         while not self.stopQueue and currentFrame <= int(endFrame):
             frame  = Frame(
@@ -321,7 +319,7 @@ class User:
                 FileServer.getAudioFrame(currentFrame, path + videoName + '.wav', fps), 
                 currentFrame
             )
-            print(f'frame {currentFrame} created')
+            #print(f'frame {currentFrame} created')
             
             #image display
             # x = cv2.imdecode(frame.img, cv2.IMREAD_COLOR)
@@ -330,7 +328,7 @@ class User:
             #     break
             
             FileServer.sendFrame(frame, self._conn)
-            print(f'frame {currentFrame} sent')
+            #print(f'frame {currentFrame} sent')
             currentFrame += 1
 
 
