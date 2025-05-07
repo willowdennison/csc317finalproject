@@ -9,6 +9,8 @@ from moviepy import VideoFileClip
 import io
 import struct
 
+
+
 class FileServer:
 
 
@@ -44,10 +46,6 @@ class FileServer:
     #DOES NOT CHECK FOR FILE PATH MISSING for efficiency, will only be run if we know exactly where each frame is located b/c it will stop 
     #sending files if something goes wrong and crash the client and the thread
     def sendFrame(frame:Frame, conn):
-        #segmentList = FileServer.encodePickle(frame.dumpToPickle())
-
-        #for item in segmentList:
-            #conn.send(item)
             
         data = frame.dumpToPickle()
         message_size = struct.pack('I', len(data))
@@ -129,6 +127,7 @@ class FileServer:
         segmentList = []
 
         while True:
+            
             data = conn.recv(1024)
             
             segmentList.append(data)
@@ -146,14 +145,12 @@ class FileServer:
 
                 if doPrint:
                     print(f'{fileName} info created')
+                    
                 return
     
     
     #creates an mp3 file in the same folder as the given mp4 file
     def createMP3(fileName, directoryName, doPrint = True):
-        
-        print('createMP3')
-        print(fileName)
         
         videoPath = directoryName + fileName + '.mp4'
         audioPath = directoryName + fileName + '.wav'
@@ -186,6 +183,7 @@ class FileServer:
         return segments
     
     
+    #takes a pickle (or any bytes object) and dumps it to a list to be sent over a socket
     def encodePickle(pkl):
         
         nSegments = int(len(pkl) / 1024) + (len(pkl) % 1024 > 0)
@@ -201,6 +199,7 @@ class FileServer:
     
     #takes a segmentList, writes it into directoryPath as an mp4 file
     def decodeVideo(segmentList, fileName, directoryPath):
+        
         filePath = directoryPath + fileName
         file = open(filePath, 'wb')
 
@@ -208,11 +207,9 @@ class FileServer:
             file.write(segment)
         
         file.close()
-        
-        #print('end decodeVideo')
     
     
-    #calls user
+    #creates user, object called in a thread
     def createUserThread(conn):
         User(conn)
    
@@ -236,20 +233,20 @@ class FileServer:
 
         cap = cv2.VideoCapture(videoPath)
 
-        #print(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
         cap.set(cv2.CAP_PROP_POS_FRAMES, frameInput-1)
-        ret, frame = cap.read()
+        _, frame = cap.read()
         frame = cv2.resize(frame, (640, 480))
 
-        ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
+        _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
         
         data = pickle.dumps(buffer)
 
         return data
     
+    
     #gets the audio frames that play during the video frame requested
     def getAudioFrame(frameInput, audioPath, fps):
+        
         wf = wave.open(audioPath, 'rb')
         frameRate = wf.getframerate()
 
@@ -260,6 +257,7 @@ class FileServer:
     
         return(audioFrame)
         
+   
         
 class User:
 
@@ -319,16 +317,9 @@ class User:
                 FileServer.getAudioFrame(currentFrame, path + videoName + '.wav', fps), 
                 currentFrame
             )
-            #print(f'frame {currentFrame} created')
-            
-            #image display
-            # x = cv2.imdecode(frame.img, cv2.IMREAD_COLOR)
-            # cv2.imshow('dfs', x)
-            # if cv2.waitKey(1) & 0xFF == ord('q'):
-            #     break
             
             FileServer.sendFrame(frame, self._conn)
-            #print(f'frame {currentFrame} sent')
+            
             currentFrame += 1
 
 
