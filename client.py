@@ -27,7 +27,7 @@ class Client:
 
         self.recvThreadRunning = False
        
-        self.playbackEnabled = False
+        self.playbackEnabled = True
         
         self.videoStream = None
        
@@ -68,8 +68,8 @@ class Client:
         info = self.mainSocket.recv(1024).decode()
         info = info.split('\n')
         #print(f'info: {info}')
-        numFrames = info[0].split(':')[1]
-        fps = info[1].split(':')[1]
+        fps = info[0].split(':')[1]
+        numFrames = info[1].split(':')[1]
         
         self.currentVideo = videoName
         self.recvThreadRunning = True
@@ -88,9 +88,11 @@ class Client:
 
         if self.playbackEnabled:
             self.videoStream.pause()
+            self.playbackEnabled = False
             
         else:
             self.videoStream.play()
+            self.playbackEnabled = True
 
 
     #sends a request to the server to clsoe the concection. 

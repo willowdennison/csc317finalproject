@@ -12,9 +12,7 @@ class VideoStream:
     #takes the total number of frames in the video, the framerate in frames per second,
     #and the gui object to play video on
     def __init__(self, fps:int):
-        
         self.frameRate = int(float(fps))
-        self.position = 0
         
         #current start and end frame being requested, none meaning end frame
         self.currentRequest = (0, None)
@@ -26,7 +24,7 @@ class VideoStream:
         self.audioStream = p.open(format=p.get_format_from_width(2), channels=2,rate=44100,output=True,frames_per_buffer=(round(44100/int(float(fps)))),start = False)
             
         #should the play loop be playing or buffering?
-        self.play = True
+        self.playVideo = True
         self.buffer = True
         
         #to end loop in thread
@@ -47,17 +45,14 @@ class VideoStream:
         
         while self.runThread:
             
-            self.checkBuffer()
+            #self.checkBuffer()
             
-            if self.play and not self.buffer:
-                
-                #self.audioStream.start_stream()
+            if self.playVideo:
                 
                 #wait the appropriate time between frames
                 if time.time() >= lastFrameTime + waitTime:
                     
                     lastFrameTime = time.time()
-                    self.position += 1
                     
                     killLoop = self.render()
 
@@ -68,18 +63,6 @@ class VideoStream:
                     
             else:
                 pass
-                #self.audioStream.stop_stream()
-                    
-    
-    #checks if the frame 5 seconds ahead of current position is available
-    #if its available sets buffer to False, if not sets it to True
-    def checkBuffer(self):
-        checkFrame = self.frameRate * 5
-            
-        if self.frameQueue.qsize() <= checkFrame:
-            self.buffer = False
-        elif self.frameQueue.qsize() >= checkFrame * 3:
-            self.buffer = True
             
     
     #takes a frame and adds it to the frame list at the index of its frameNum
@@ -90,27 +73,36 @@ class VideoStream:
     
     #renders frame image and audio to self.gui
     def render(self):
-        if self.audioStream.is_active():
-            self.audioStream.write(self.audioQueue.get())
-        
-        img = self.frameQueue.get()
-        
-        frame=cv2.imdecode(img, cv2.IMREAD_COLOR)
-        cv2.imshow("WORK PLEASE", frame)
+        checkFrame = self.frameRate * 2
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            return True
+        if self.frameQueue.qsize() <= checkFrame:
+            self.buffer = True
+        elif self.frameQueue.qsize() >= checkFrame * 3:
+            self.buffer = False
+
+        if not self.buffer:
+            if self.audioStream.is_active():
+                self.audioStream.write(self.audioQueue.get())
+            
+            img = self.frameQueue.get()
+            
+            frame=cv2.imdecode(img, cv2.IMREAD_COLOR)
+            cv2.imshow("WORK PLEASE", frame)
+
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                return True
+            
         return False
         
     
     #set self.play to true and tell videostream to play on gui
     def play(self):
-        self.play = True
+        self.playVideo = True
         
     
     #set self.play to false and tell videostream to pause on gui
     def pause(self):
-        self.play = False
+        self.playVideo = False
         
     
     #sets self.position to frameNum and starts playing from there
@@ -120,4 +112,3 @@ class VideoStream:
         self.frameQueue = Queue()
         
         self.currentRequest = (frameNum, endFrame)
-        self.position = frameNum
